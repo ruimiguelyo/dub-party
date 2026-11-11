@@ -308,7 +308,7 @@ const EN={
 'A criar sala…':'Creating room…','Envia o código aos teus amigos':'Send the code to your friends','Escreve o código da sala':'Type the room code',
 'A sala fechou ou perdeste a ligação':'The room closed or you lost connection','Primeiro escolhe um pacote':'Choose a pack first','Código copiado':'Code copied',
 'Fechar a sala para todos?':'Close the room for everyone?','Sair da sala?':'Leave the room?','Dub Party instalado 🎉':'Dub Party installed 🎉',
-'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language','Ligação perdida, a voltar a ligar…':'Connection lost, reconnecting…','A receber o pacote…':'Receiving the pack…'
+'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language','Ligação perdida, a voltar a ligar…':'Connection lost, reconnecting…','o microfone está a ser usado por outra app (uma chamada?)':'another app is using the microphone (a call?)','O microfone foi cortado por outra app. Se estás numa chamada, desliga-a e tenta de novo.':"Another app took the microphone. If you're on a call, hang up and try again.",'Não ouvi nada. No iPhone, o microfone não funciona durante chamadas (telefone, WhatsApp, Discord…).':"Didn't hear anything. On iPhone the mic doesn't work during calls (phone, WhatsApp, Discord…).",'A receber o pacote…':'Receiving the pack…'
 };
 const tr1=s=>EN[s]!=null?EN[s]:s;
 const RULES=[
@@ -316,7 +316,7 @@ const RULES=[
 [/^De (.+)$/,"$1's"],[/^Escolhe (.+)$/,'Pick $1'],[/^Gravado por (.+)$/,'Recorded by $1'],[/^(\d+)\/(\d+) tuas$/,'$1/$2 yours'],
 [/^(\d+) falas?( · .+)?$/,(m,a,b)=>a+(a==='1'?' line':' lines')+(b||'')],[/^(\d+) jogador(es)?$/,(m,a)=>a+(a==='1'?' player':' players')],
 [/^(.*) \(tu\)(.*)$/,'$1 (you)$2'],[/^(.+) ✓ pronto$/,'$1 ✓ ready'],
-[/^Não consegui abrir o microfone: (.*)$/,"Couldn't open the microphone: $1"],
+[/^Não consegui abrir o microfone: (.*)$/,(m,a)=>"Couldn't open the microphone: "+tr1(a)],
 [/^🎯 (\d+)% — a ouvir a tua gravação… \(R regrava, → seguinte\)$/,'🎯 $1% — playing your take… (R re-records, → next)'],
 [/^✅ Acabaste as tuas falas! À espera de (.+)…$/,(m,a)=>'✅ You finished your lines! Waiting for '+a.split(', ').map(tr1).join(', ')+'…'],
 [/^Erro ao exportar: (.*)$/,'Export failed: $1'],[/^Apagar (\d+) gravações tuas deste pacote\?$/,'Delete $1 of your recordings in this pack?'],
@@ -716,12 +716,20 @@ async function commitMeta(){const l=cur(),t=S.takes[l.id];if(!t)return;t.v=Date.
 
 /* ===== microphone ===== */
 const MIC={stream:null,node:null,src:null,an:null,chunks:null,ready:null};
+const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const MIC_BUSY='o microfone está a ser usado por outra app (uma chamada?)',MIC_BUSY_T='O microfone foi cortado por outra app. Se estás numa chamada, desliga-a e tenta de novo.';
 const WORKLET=`class R extends AudioWorkletProcessor{constructor(){super();this.on=false;this.port.onmessage=e=>{this.on=e.data}}process(i){const c=i[0]&&i[0][0];if(this.on&&c)this.port.postMessage({f:currentFrame,d:c.slice(0)});return true}}registerProcessor('rec-proc',R);`;
 async function micReady(){
   if(MIC.ready)return MIC.ready;
   MIC.ready=(async()=>{
-    const A=ctx();await A.resume();
-    MIC.stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:settings.micId?{exact:settings.micId}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:false,channelCount:1}});
+    let A=ctx();await A.resume();
+    MIC.stream=await navigator.mediaDevices.getUserMedia({audio:IOS?(settings.micId?{deviceId:{exact:settings.micId}}:true):{deviceId:settings.micId?{exact:settings.micId}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:false,channelCount:1}});
+    const tr=MIC.stream.getAudioTracks()[0];
+    // iPhone/iPad: an AudioContext made before the mic opened can get only silence from it -> make a fresh one now
+    if(IOS&&!MIC.node){try{await AC.close()}catch{}AC=null;A=ctx();await A.resume()}
+    if(IOS)A.onstatechange=()=>{if(A.state!=='running'&&A.state!=='closed')A.resume().catch(()=>{})};
+    if(tr&&tr.muted){MIC.stream.getTracks().forEach(t=>t.stop());throw new Error(MIC_BUSY)}
+    if(tr)tr.onmute=()=>toast(MIC_BUSY_T,6000);
     if(!MIC.node){await A.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'})));MIC.node=new AudioWorkletNode(A,'rec-proc');MIC.node.port.onmessage=e=>{if(MIC.chunks){MIC.chunks.push(e.data);onLiveChunk(e.data)}};const z=A.createGain();z.gain.value=0;MIC.node.connect(z);z.connect(A.destination);MIC.an=A.createAnalyser();MIC.an.fftSize=1024}
     if(MIC.src)MIC.src.disconnect();MIC.src=A.createMediaStreamSource(MIC.stream);MIC.src.connect(MIC.node);MIC.src.connect(MIC.an);
     listMics();meter();
@@ -784,7 +792,7 @@ async function finishRecord(l){
   if(!liveRec||S.busy!=='record')return;
   const {data,sr}=liveRec;stopAll(true);
   let peak=0;for(const v of data)peak=Math.max(peak,Math.abs(v));
-  if(peak<0.01){renderLine();return toast('Não ouvi nada — vê o microfone em ⚙',4500)}
+  if(peak<0.01){renderLine();const tr=MIC.stream&&MIC.stream.getAudioTracks()[0];if(tr&&(tr.muted||tr.readyState!=='live')){MIC.stream.getTracks().forEach(t=>t.stop());MIC.ready=null;return toast(MIC_BUSY_T,6000)}return toast(IOS?'Não ouvi nada. No iPhone, o microfone não funciona durante chamadas (telefone, WhatsApp, Discord…).':'Não ouvi nada — vê o microfone em ⚙',6000)}
   const f=resample(data,sr,TAKE_SR),i16=new Int16Array(f.length);for(let i=0;i<f.length;i++)i16[i]=clamp(Math.round(f[i]*32767),-32768,32767);
   const on=$('#fx .on');
   const t={lineId:l.id,pcm:i16.buffer,sr:TAKE_SR,pre:PRE,effect:on?on.dataset.fx:'original',params:{pitch:+$('#fxPitch').value},offset:0,by:NET.myId||'me',byName:myName(),char:l.char,v:Date.now()};
