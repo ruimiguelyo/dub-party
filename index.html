@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dub Party</title>
-<meta name="description" content="Dobra cenas com os teus amigos: cria uma sala, cada um escolhe uma personagem, gravem as falas com efeitos de voz e vejam a dobragem juntos. Grátis, no browser, com pacotes do GameBanana.">
+<meta name="description" content="Dub scenes with your friends: create a room, everyone picks a character, record your lines with voice effects and watch the dub together. Free, in the browser, with GameBanana packs.">
 <meta name="theme-color" content="#0b1011">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ruimiguelyo.github.io/dub-party/">
-<meta property="og:title" content="Dub Party: dobragens com amigos, grátis">
-<meta property="og:description" content="Cria uma sala, cada um escolhe uma personagem, gravem as falas e vejam a dobragem juntos. No browser, sem instalar nada.">
+<meta property="og:title" content="Dub Party: free dubbing game to play with friends">
+<meta property="og:description" content="Create a room, everyone picks a character, record your lines and watch the dub together. In the browser, nothing to install.">
 <meta property="og:image" content="https://ruimiguelyo.github.io/dub-party/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Dub Party: dobragens com amigos, grátis">
-<meta name="twitter:description" content="Cria uma sala, cada um escolhe uma personagem, gravem as falas e vejam a dobragem juntos.">
+<meta name="twitter:title" content="Dub Party: free dubbing game to play with friends">
+<meta name="twitter:description" content="Create a room, everyone picks a character, record your lines and watch the dub together.">
 <meta name="twitter:image" content="https://ruimiguelyo.github.io/dub-party/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -192,6 +192,7 @@ kbd{border:1px solid #555;border-radius:4px;padding:0 5px;font-size:12px;backgro
     <span class="sp"></span>
     <button class="b main" id="watchBtn">▶ Ver dobragem</button>
     <button class="b" id="installBtn" hidden title="Instala o Dub Party como uma app">⬇ Instalar</button>
+    <button class="ico" id="langBtn" title="Mudar língua" style="font-size:11px">PT</button>
     <button class="ico" id="helpBtn" title="Como jogar">?</button>
     <button class="ico" id="setBtn" title="Definições">⚙</button>
   </header>
@@ -270,6 +271,99 @@ kbd{border:1px solid #555;border-radius:4px;padding:0 5px;font-size:12px;backgro
 </div></div>
 <div class="toast" id="toast"></div>
 <div class="loading" id="loading"><div id="loadingT">A carregar…</div></div>
+<script>
+/* ===== language: Portuguese or English =====
+   The game is written in Portuguese; in English every text that reaches the screen
+   (static HTML, rendered lists, toasts, dialogs) is translated here, so the game code stays as is. */
+const LANG=(()=>{try{const s=localStorage.getItem('dubparty-lang');if(s==='pt'||s==='en')return s}catch{}return /^pt\b/i.test(navigator.language||'')?'pt':'en'})();
+document.documentElement.lang=LANG;
+const EN={
+'Escolher pacote':'Choose pack','Só acontece uma vez por pacote. Já podes jogar enquanto isto corre.':'Only happens once per pack. You can keep playing meanwhile.',
+'▶ Ver dobragem':'▶ Watch dub','■ Parar':'■ Stop','Instala o Dub Party como uma app':'Install Dub Party as an app','⬇ Instalar':'⬇ Install',
+'Como jogar':'How to play','Definições':'Settings','Microfone':'Microphone','Predefinido':'Default','Nível':'Level','testar':'test',
+'Atraso do microfone:':'Mic delay:','⬇ Exportar dobragem (WAV)':'⬇ Export dub (WAV)','🗑 Apagar as minhas gravações':'🗑 Delete my recordings',
+'Sem pacote':'No pack loaded','Carrega um .zip, .rar ou .7z em “Escolher pacote”.':'Load a .zip, .rar or .7z with “Choose pack”.',
+'Este browser não abre o vídeo deste pacote diretamente. A otimizar o vídeo… (precisa de internet da primeira vez)':"This browser can't play this pack's video directly. Optimizing the video… (needs internet the first time)",
+'Fala anterior (←)':'Previous line (←)','Fala seguinte (→)':'Next line (→)','Espaço':'Space','Gravar':'Record','Regravar':'Re-record','Parar':'Stop',
+'A minha':'Mine','Próxima fala minha ⇥':'My next line ⇥','Tu':'You','Acerta o tempo da tua voz com o original':'Lines your voice up with the original',
+'Auto-sincronizar':'Auto-sync','Apagar':'Delete','Tom':'Pitch','Personagens':'Characters','Falas':'Lines','A carregar…':'Loading…','Fechar':'Close',
+'Fala de outra pessoa':"Someone else's line",'tua, por gravar':'yours, not recorded yet','✓ gravada':'✓ recorded',
+'Escolher':'Pick','✓ Tua':'✓ Yours','Ocupada':'Taken','Carrega um pacote':'Load a pack','Carregar zip':'Load pack','Remover':'Remove',
+'Jogar com amigos':'Play with friends','O teu nome':'Your name','Criar sala':'Create room','Código':'Code','Entrar':'Join','Sala':'Room',
+'Clica para copiar':'Click to copy','Todos prontos! 🎬':'Everyone is ready! 🎬',
+'Quando todos acabarem as suas falas, a dobragem começa sozinha para todos.':'When everyone finishes their lines, the dub starts by itself for everyone.',
+'Sair da sala':'Leave room','🎉 Todos gravaram! A dobragem começa em':'🎉 Everyone recorded! The dub starts in',
+'🐻 Grave':'🐻 Deep','🐭 Agudo':'🐭 High','🐿 Desenho animado':'🐿 Cartoon','🤖 Robô':'🤖 Robot','👹 Monstro':'👹 Monster','📻 Rádio':'📻 Radio',
+'📢 Megafone':'📢 Megaphone','🕳 Caverna':'🕳 Cave','🏔 Eco':'🏔 Echo','👥 Coro':'👥 Choir','🌊 Debaixo d’água':'🌊 Underwater',
+'Não encontrei _pack_info.ini nem dub_video neste zip.':"Couldn't find _pack_info.ini or dub_video in this zip.",'Este zip não tem falas.':'This zip has no lines.',
+'A carregar o vídeo…':'Loading the video…','A preparar o vídeo .ogv para este browser…':'Preparing the .ogv video for this browser…',
+'Não tens mais falas à frente':'No more lines of yours ahead','Apagar a gravação desta fala?':"Delete this line's recording?",
+'Fala para ver o nível':'Speak to see the level','Escolhe esta personagem primeiro':'Pick this character first',
+'Não ouvi nada — vê o microfone em ⚙':"Didn't hear anything — check the mic in ⚙",'A preparar a dobragem…':'Preparing the dub…','A misturar a dobragem…':'Mixing the dub…',
+'Não tens gravações neste pacote':'You have no recordings in this pack','Na sala, é o anfitrião que escolhe o pacote':'In a room, the host picks the pack',
+'Remover este pacote e as gravações dele?':'Remove this pack and its recordings?','A preparar o pacote…':'Preparing the pack…',
+'Este zip não parece um pacote de dobragem':"This zip doesn't look like a dub pack",'o browser não abriu o vídeo convertido':"the browser couldn't open the converted video",
+'⚡ Vídeo otimizado: agora trocar de fala é instantâneo':'⚡ Video optimized: switching lines is now instant','A abrir pacote…':'Opening pack…',
+'A carregar o vídeo todo antes de jogar…':'Loading the whole video before playing…','Sem internet para o modo multijogador':'No internet connection for multiplayer',
+'A criar sala…':'Creating room…','Envia o código aos teus amigos':'Send the code to your friends','Escreve o código da sala':'Type the room code',
+'A sala fechou ou perdeste a ligação':'The room closed or you lost connection','Primeiro escolhe um pacote':'Choose a pack first','Código copiado':'Code copied',
+'Fechar a sala para todos?':'Close the room for everyone?','Sair da sala?':'Leave the room?','Dub Party instalado 🎉':'Dub Party installed 🎉',
+'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language'
+};
+const tr1=s=>EN[s]!=null?EN[s]:s;
+const RULES=[
+[/^A preparar falas (\d+)\/(\d+)$/,'Preparing lines $1/$2'],[/^· fala (\d+) de (\d+)( ·)?$/,'· line $1 of $2$3'],[/^✓ gravada por (.+)$/,'✓ recorded by $1'],
+[/^De (.+)$/,"$1's"],[/^Escolhe (.+)$/,'Pick $1'],[/^Gravado por (.+)$/,'Recorded by $1'],[/^(\d+)\/(\d+) tuas$/,'$1/$2 yours'],
+[/^(\d+) falas?( · .+)?$/,(m,a,b)=>a+(a==='1'?' line':' lines')+(b||'')],[/^(\d+) jogador(es)?$/,(m,a)=>a+(a==='1'?' player':' players')],
+[/^(.*) \(tu\)(.*)$/,'$1 (you)$2'],[/^(.+) ✓ pronto$/,'$1 ✓ ready'],
+[/^Não consegui abrir o microfone: (.*)$/,"Couldn't open the microphone: $1"],
+[/^🎯 (\d+)% — a ouvir a tua gravação… \(R regrava, → seguinte\)$/,'🎯 $1% — playing your take… (R re-records, → next)'],
+[/^✅ Acabaste as tuas falas! À espera de (.+)…$/,(m,a)=>'✅ You finished your lines! Waiting for '+a.split(', ').map(tr1).join(', ')+'…'],
+[/^Erro ao exportar: (.*)$/,'Export failed: $1'],[/^Apagar (\d+) gravações tuas deste pacote\?$/,'Delete $1 of your recordings in this pack?'],
+[/^A importar (.+)$/,'Importing $1'],[/^Erro: (.*)$/,(m,a)=>'Error: '+tr(a)],[/^Não consegui abrir: (.*)$/,(m,a)=>"Couldn't open: "+tr(a)],
+[/^A abrir o (\w+)… \(só da primeira vez demora um pouco\)$/,'Opening the $1… (slower only the first time)'],
+[/^Para abrir \.(\w+) preciso de internet \(leitor 7-Zip\)\.$/,'Opening .$1 files needs internet (7-Zip reader).'],
+[/^Não consegui extrair este \.(\w+) \(tem palavra-passe ou está danificado\?\)$/,"Couldn't extract this .$1 (password-protected or damaged?)"],
+[/^conversão falhou \((.*)\)$/,'conversion failed ($1)'],[/^⚡ A otimizar o vídeo… (\d+)%$/,'⚡ Optimizing video… $1%'],
+[/^(.+) saiu da sala$/,(m,a)=>tr1(a)+' left the room'],[/^(.+) entrou na sala$/,(m,a)=>tr1(a)+' joined the room'],
+[/^A entrar na sala (.+)…$/,'Joining room $1…'],[/^Sala (.+) não encontrada$/,'Room $1 not found'],
+[/^A receber “(.+)”…$/,'Receiving “$1”…'],[/^A receber o pacote… (\d+)%$/,'Receiving the pack… $1%'],
+];
+function tr(s){if(LANG!=='en'||!s)return s;const k=s.trim();if(!k)return s;let out=EN[k];
+  if(out==null)for(const [re,to] of RULES)if(re.test(k)){out=k.replace(re,to);break}
+  return out==null?s:s.replace(k,out)}
+const SKIP='#capText,.ln .t,.tape .nm,#chipL,#chipR,#count';
+function trNode(n){
+  if(n.nodeType===3){if(n.parentElement&&n.parentElement.closest(SKIP))return;const v=n.nodeValue,t=tr(v);if(t!==v)n.nodeValue=t;return}
+  if(n.nodeType!==1)return;
+  for(const a of['title','placeholder']){const v=n.getAttribute(a);if(v){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}
+  for(const c of n.childNodes)trNode(c);
+}
+if(LANG==='en'){
+  const nc=window.confirm.bind(window);window.confirm=m=>nc(tr(String(m)));
+  document.querySelector('#helpM .mbox').innerHTML=`<h2>How to play</h2>
+  <ol>
+    <li>Get a pack: <a href="https://gamebanana.com/mods/cats/44064" target="_blank" rel="noopener" style="color:var(--teal)">GameBanana (Dub Mode)</a> has hundreds of scenes. Download one and load the .zip, .rar or .7z with <b>Choose pack</b>. The first time, the video gets optimized (about a minute); you can play meanwhile.</li>
+    <li>To play with friends: <b>Create room</b> and send them the code. They open this same site, type the code and get the pack automatically (no download needed).</li>
+    <li>Everyone picks a character under <b>Characters</b>.</li>
+    <li><kbd>Space</kbd> plays the original · <kbd>R</kbd> records (3‑2‑1) · <kbd>P</kbd> plays yours · <kbd>←</kbd> <kbd>→</kbd> change line · <kbd>N</kbd> jumps to your next unrecorded line. After recording, your take plays back by itself.</li>
+    <li>In the waves, your voice (blue) is drawn over the original (pink). Drag it or click <b>Auto‑sync</b>.</li>
+    <li>Pick a voice effect: you can switch any time.</li>
+    <li><b>Watch dub</b>: in a room it starts at the same time for everyone. While watching, press 😂🔥💀👏😭 (or keys 1–5) to react.</li>
+  </ol>
+  <p style="color:var(--muted);font-size:13px">Use headphones. Packs and recordings stay in your browser; in a room they go straight to your friends. You can install Dub Party as an app with <b>⬇ Install</b> (or from the browser menu).</p>
+  <button class="b" data-close>Close</button>`;
+  trNode(document.body);
+  new MutationObserver(ms=>{for(const m of ms){
+    if(m.type==='childList')m.addedNodes.forEach(trNode);
+    else if(m.type==='characterData')trNode(m.target);
+    else if(m.type==='attributes')trNode(m.target)}})
+  .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder']});
+}
+const $lb=document.getElementById('langBtn');$lb.textContent=LANG==='en'?'EN':'PT';
+$lb.onclick=()=>{if(typeof NET!=='undefined'&&NET.active&&!confirm(LANG==='en'?'Switching language reloads the page and leaves the room. Continue?':'Mudar a língua recarrega a página e sai da sala. Continuar?'))return;
+  try{localStorage.setItem('dubparty-lang',LANG==='en'?'pt':'en')}catch{}location.reload()};
+</script>
 
 <script>
 'use strict';

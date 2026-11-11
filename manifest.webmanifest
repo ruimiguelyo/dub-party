@@ -1,8 +1,8 @@
 {
   "name": "Dub Party",
   "short_name": "Dub Party",
-  "description": "Dobra cenas com os teus amigos: escolhe uma personagem, grava as falas e vejam a dobragem juntos. Grátis, no browser.",
-  "lang": "pt",
+  "description": "Dub scenes with your friends: pick a character, record your lines and watch the dub together. Free, in the browser.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
