@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dub Party</title>
+<meta name="description" content="Dobra cenas com os teus amigos: cria uma sala, cada um escolhe uma personagem, gravem as falas com efeitos de voz e vejam a dobragem juntos. Grátis, no browser, com pacotes do GameBanana.">
+<meta name="theme-color" content="#0b1011">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ruimiguelyo.github.io/dub-party/">
+<meta property="og:title" content="Dub Party: dobragens com amigos, grátis">
+<meta property="og:description" content="Cria uma sala, cada um escolhe uma personagem, gravem as falas e vejam a dobragem juntos. No browser, sem instalar nada.">
+<meta property="og:image" content="https://ruimiguelyo.github.io/dub-party/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dub Party: dobragens com amigos, grátis">
+<meta name="twitter:description" content="Cria uma sala, cada um escolhe uma personagem, gravem as falas e vejam a dobragem juntos.">
+<meta name="twitter:image" content="https://ruimiguelyo.github.io/dub-party/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#0b1011;--card:#121a1c;--card2:#0f1517;--line:#1f2b2e;--line2:#2c3b3f;--text:#e8f0f1;--muted:#8a9fa3;--dim:#56696d;--teal:#19c6d6;--pink:#e040c8;--red:#ff4d5e;--gold:#f2b632}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 Rubik,system-ui,sans-serif;min-height:100vh}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{opacity:.35;cursor:not-allowed}
+.wrap{max-width:1220px;margin:0 auto;padding:16px 16px 48px}
+/* header */
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.logo{font:20px Bungee;letter-spacing:.02em;margin:0}
+.logo span{color:var(--teal)}
+.packbtn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line2);border-radius:999px;color:var(--muted);max-width:360px}
+.packbtn b{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.packbtn:hover{border-color:var(--teal)}
+.sp{flex:1}
+.ico{width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;color:var(--muted);font-weight:700}
+.ico:hover{border-color:var(--teal);color:var(--text)}
+/* shelf */
+.shelf{display:flex;gap:12px;overflow-x:auto;padding:12px;margin-bottom:14px;background:var(--card2);border:1px solid var(--line);border-radius:12px}
+.tape{position:relative;flex:0 0 96px;cursor:pointer}
+.tape .box{height:132px;border-radius:8px;background:#000 center/cover;border:2px solid var(--line2);position:relative;overflow:hidden;transition:.15s}
+.tape:hover .box{transform:translateY(-2px)}
+.tape.on .box{border-color:var(--teal);box-shadow:0 0 16px rgba(25,198,214,.4)}
+.tape .nm{position:absolute;left:0;right:0;bottom:0;padding:18px 6px 6px;background:linear-gradient(transparent,rgba(0,0,0,.92));font-size:11px;font-weight:600;line-height:1.2}
+.tape .x{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);font-size:11px;display:none}
+.tape:hover .x{display:block}
+.tape.up .box{display:grid;place-items:center;border-style:dashed;background:none;color:var(--muted);text-align:center;font-size:12px}
+.tape.up .box b{display:block;font-size:26px;color:var(--teal);font-weight:400}
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h3{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.card h3 small{text-transform:none;letter-spacing:0;color:var(--teal);font-weight:600}
+aside .card+.card{margin-top:14px}
+/* screen */
+.screen{position:relative;background:#000;border-radius:14px;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--line)}
+.screen video,.screen img.still{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.screen video{transition:opacity .1s}
+.screen .ogvp{position:absolute!important;inset:0;width:100%!important;height:100%!important;background:#000}
+.screen .ogvp canvas{width:100%!important;height:100%!important;object-fit:contain}
+.screen .hide{opacity:0}
+.chip{position:absolute;top:12px;z-index:3;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600}
+.chip.l{left:12px}.chip.r{right:12px;color:var(--teal)}
+.chip.rec{background:var(--red);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.6}}
+.cap{position:absolute;left:0;right:0;bottom:6%;text-align:center;z-index:3;pointer-events:none;padding:0 8%}
+.cap .who{display:inline-block;font:10px Bungee;padding:2px 8px;border-radius:3px;color:#041315;margin-bottom:6px}
+.cap p{margin:0;font-size:clamp(15px,2.3vw,23px);font-weight:600;text-shadow:0 2px 4px #000,0 0 12px #000}
+.count{position:absolute;inset:0;display:grid;place-items:center;z-index:4;pointer-events:none;font:96px Bungee;color:#fff;text-shadow:0 0 30px var(--red)}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);z-index:2;padding:20px}
+.empty b{display:block;font:18px Bungee;color:var(--text);margin-bottom:4px}
+.warn{position:absolute;left:12px;right:12px;bottom:12px;z-index:5;background:rgba(42,26,8,.92);border:1px solid #7a5d1d;color:#ffd58a;padding:8px 12px;border-radius:8px;font-size:12px}
+.strip{position:relative;height:14px;margin:10px 2px 0;cursor:pointer}
+.strip::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line2);border-radius:1px}
+.strip i{position:absolute;top:2px;width:3px;height:10px;border-radius:2px;opacity:.35}
+.strip i.done{opacity:1}
+.strip i.cur{opacity:1;box-shadow:0 0 0 2px #fff}
+.strip .ph{position:absolute;top:0;width:2px;height:14px;background:#fff}
+/* controls */
+.ctrl{display:grid!important;grid-template-columns:48px 1fr 1fr 1fr 48px;gap:10px}
+.nav{border-radius:12px;background:#1a2528;border:1px solid var(--line2);font-size:24px}
+.nav:hover:not(:disabled){border-color:var(--teal)}
+.act{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:12px;background:#1a2528;border:1px solid var(--line2)}
+.act:hover:not(:disabled){border-color:var(--teal)}
+.act b{font-size:15px}.act small{font-size:10px;color:var(--muted)}
+.act .ic{font-size:14px;height:16px;display:grid;place-items:center}
+.act.rec{background:var(--red);border-color:var(--red);color:#fff}.act.rec small{color:#ffd4d8}
+.act .dot{width:12px;height:12px;border-radius:50%;background:#fff;margin-top:2px}
+.act.rec.on .dot{border-radius:2px}
+.act.playing{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal) inset}
+.sub{display:flex;align-items:center;gap:10px;margin:-4px 2px 14px;font-size:13px;color:var(--muted)}
+.sub b{font-weight:600}
+.ctrl{display:flex;align-items:center;gap:10px;margin:14px 0}
+.b{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:999px;background:#1a2528;border:1px solid var(--line2);font-weight:600;white-space:nowrap}
+.b:hover:not(:disabled){border-color:var(--teal)}
+.b.round{width:42px;height:42px;padding:0;justify-content:center;font-size:18px}
+.b.rec{background:var(--red);border-color:var(--red);color:#fff;padding:12px 22px}
+.b.rec .dot{width:10px;height:10px;border-radius:50%;background:#fff}
+.b.rec.on .dot{border-radius:2px}
+.b.main{background:var(--teal);border-color:var(--teal);color:#032024}
+.b.main.on{background:#fff;border-color:#fff}
+@media (max-width:640px){.ctrl{flex-wrap:wrap}.ctrl .sp{display:none}}
+/* waves */
+.wv canvas{display:block;width:100%;height:104px;background:#0a0f10;border-radius:8px;cursor:ew-resize;touch-action:none}
+.whead{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.whead .lg{display:flex;align-items:center;gap:5px}
+.whead .lg i{width:9px;height:9px;border-radius:2px}
+.lnk{color:var(--muted);font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--line2)}
+.lnk:hover:not(:disabled){color:var(--text);border-color:var(--teal)}
+.fx{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.fx button{padding:6px 11px;border-radius:999px;border:1px solid var(--line2);font-size:13px;background:var(--card2)}
+.fx button:hover:not(:disabled){border-color:var(--teal)}
+.fx button.on{background:var(--teal);border-color:var(--teal);color:#032024;font-weight:600}
+.tone{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--muted)}
+.tone input{flex:1;accent-color:var(--teal);max-width:260px}
+/* room */
+.room input{width:100%;background:var(--card2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px}
+.row{display:flex;gap:8px;margin-top:8px}
+.code{font:28px Bungee;letter-spacing:.14em;text-align:center;color:var(--gold);background:var(--card2);border:1px dashed #5b4718;border-radius:10px;padding:6px;cursor:pointer}
+.players{list-style:none;margin:10px 0 0;padding:0}
+.players li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px}
+.players li i{width:8px;height:8px;border-radius:50%}
+.players li span{flex:1}
+.players li small{color:var(--muted)}
+.optpill{font-size:12px;font-weight:600;color:#ffd166;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.players li small.ok{color:var(--acc,#22c7d6);font-weight:600}
+.reacts{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;z-index:6}
+.reacts button{font-size:22px;line-height:1;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:6px 8px;cursor:pointer;transition:transform .1s}
+.reacts button:hover{transform:scale(1.15)}.reacts button:active{transform:scale(.9)}
+.floats{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.fl{position:absolute;bottom:40px;display:flex;flex-direction:column;align-items:center;animation:floatUp 2.6s ease-out forwards}
+.fl b{font-size:40px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.fl small{font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.55);margin-top:2px}
+@keyframes floatUp{0%{transform:translateY(20px) scale(.5);opacity:0}12%{transform:translateY(0) scale(1.15);opacity:1}100%{transform:translateY(-260px) scale(1);opacity:0}}
+.bigcount{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);z-index:7;text-align:center;font-weight:800}
+.bigcount b{display:block;font-size:72px}.bigcount span{font-size:16px;opacity:.85}
+.st{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
+/* characters */
+.chr{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.chr:first-of-type{border-top:0}
+.chr .av{width:38px;height:38px;border-radius:50%;background:#000 center/cover;border:2px solid var(--line2);flex:none}
+.chr .nm{flex:1;min-width:0;font-weight:600}
+.chr .nm small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.chr button{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--line2)}
+.chr button.mine{background:var(--teal);border-color:var(--teal);color:#032024;font-weight:600}
+/* lines */
+.lines{max-height:330px;overflow:auto;margin:0 -6px}
+.ln{display:flex;gap:8px;align-items:flex-start;padding:6px;border-radius:8px;cursor:pointer;font-size:13px}
+.ln:hover{background:#18272a}
+.ln.cur{background:#163236}
+.ln.dim{opacity:.4}
+.ln .n{color:var(--dim);font-variant-numeric:tabular-nums;width:20px;flex:none}
+.ln .d{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+.ln .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln .s{flex:none;color:var(--teal);font-size:12px}
+/* popover + modal */
+.pop{position:absolute;right:16px;top:58px;width:290px;z-index:40;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:14px;box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.pop label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+.pop label:first-child{margin-top:0}
+.pop select{width:100%;background:var(--card2);border:1px solid var(--line2);border-radius:8px;padding:7px}
+.pop input[type=range]{width:100%;accent-color:var(--teal)}
+.lvl{height:6px;background:#1d2628;border-radius:3px;overflow:hidden}
+.lvl div{height:100%;width:0;background:#3ddc84}
+.pop hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+.pop .b{width:100%;justify-content:center;margin-top:6px;padding:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;z-index:50;padding:16px}
+.modal.on{display:grid}
+.mbox{background:var(--card);border:1px solid var(--line2);border-radius:14px;max-width:560px;width:100%;padding:20px}
+.mbox h2{font:18px Bungee;margin:0 0 12px}
+.mbox ol{padding-left:20px;margin:0}.mbox li{margin-bottom:7px}
+kbd{border:1px solid #555;border-radius:4px;padding:0 5px;font-size:12px;background:#111}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0e1f22;border:1px solid var(--teal);padding:10px 16px;border-radius:10px;z-index:60;display:none;max-width:90vw}
+.toast.on{display:block}
+.loading{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;place-items:center;z-index:70;font:15px Bungee;color:var(--teal);text-align:center;padding:20px}
+.loading.on{display:grid}
+</style>
+</head>
+<body>
+<div class="wrap" style="position:relative">
+  <header class="top">
+    <h1 class="logo">DUB <span>PARTY</span></h1>
+    <button class="packbtn" id="packBtn" title="Escolher pacote">🎞 <b id="packName">Escolher pacote</b> ▾</button>
+    <span class="optpill" id="optPill" hidden title="Só acontece uma vez por pacote. Já podes jogar enquanto isto corre."></span>
+    <span class="sp"></span>
+    <button class="b main" id="watchBtn">▶ Ver dobragem</button>
+    <button class="b" id="installBtn" hidden title="Instala o Dub Party como uma app">⬇ Instalar</button>
+    <button class="ico" id="helpBtn" title="Como jogar">?</button>
+    <button class="ico" id="setBtn" title="Definições">⚙</button>
+  </header>
+  <div class="pop" id="pop" hidden>
+    <label>Microfone</label><select id="micSel"><option value="">Predefinido</option></select>
+    <label>Nível <button class="lnk" id="micTest" style="float:right;padding:0 6px">testar</button></label><div class="lvl"><div id="micLvl"></div></div>
+    <label>Atraso do microfone: <b id="micDelayV">0</b> ms</label><input type="range" id="micDelay" min="-200" max="300" step="5" value="0">
+    <hr>
+    <button class="b" id="exportBtn">⬇ Exportar dobragem (WAV)</button>
+    <button class="b" id="clearBtn">🗑 Apagar as minhas gravações</button>
+  </div>
+  <div class="shelf" id="shelf" hidden></div>
+  <input type="file" id="fileIn" accept=".zip,.rar,.7z" multiple hidden>
+
+  <div class="grid">
+    <section>
+      <div class="screen">
+        <video id="vid" playsinline muted preload="auto" class="hide"></video>
+        <img class="still hide" id="still" alt="">
+        <span class="chip l" id="chipL">—</span>
+        <span class="chip r" id="chipR" hidden></span>
+        <div class="cap" id="cap" hidden><span class="who" id="capChar"></span><p id="capText"></p></div>
+        <div class="count" id="count"></div>
+        <div class="floats" id="floats"></div>
+        <div class="reacts" id="reacts" hidden><button data-e="😂">😂</button><button data-e="🔥">🔥</button><button data-e="💀">💀</button><button data-e="👏">👏</button><button data-e="😭">😭</button></div>
+        <div class="bigcount" id="bigCount" hidden></div>
+        <div class="empty" id="empty"><div><b>Sem pacote</b>Carrega um .zip, .rar ou .7z em “Escolher pacote”.</div></div>
+        <div class="warn" id="codecWarn" hidden>Este browser não abre o vídeo deste pacote diretamente. A otimizar o vídeo… (precisa de internet da primeira vez)</div>
+      </div>
+      <div class="strip" id="strip"><div class="ph" id="stripPh"></div></div>
+
+      <div class="ctrl">
+        <button class="nav" id="prevBtn" title="Fala anterior (←)">‹</button>
+        <button class="act" id="listenBtn"><span class="ic">▶</span><b>Original</b><small>Espaço</small></button>
+        <button class="act rec" id="recBtn"><span class="ic dot"></span><b id="recTxt">Gravar</b><small>R</small></button>
+        <button class="act" id="playTakeBtn"><span class="ic">▶</span><b>A minha</b><small>P</small></button>
+        <button class="nav" id="nextBtn" title="Fala seguinte (→)">›</button>
+      </div>
+      <div class="sub"><span id="lnInfo"></span><span class="sp"></span><button class="lnk" id="nextMineBtn" title="N">Próxima fala minha ⇥</button></div>
+
+      <div class="card wv">
+        <div class="whead">
+          <span class="lg"><i style="background:var(--pink)"></i>Original</span>
+          <span class="lg"><i style="background:var(--teal)"></i>Tu</span>
+          <span id="stText"></span>
+          <span class="sp"></span>
+          <button class="lnk" id="autoAlign" title="Acerta o tempo da tua voz com o original">Auto-sincronizar</button>
+          <button class="lnk" id="delTake">Apagar</button>
+        </div>
+        <canvas id="wave"></canvas>
+        <div class="fx" id="fx"></div>
+        <div class="tone">Tom <input type="range" id="fxPitch" min="-12" max="12" step="1" value="0"><b id="fxPitchV">0</b></div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="card room" id="mp"></div>
+      <div class="card"><h3>Personagens</h3><div id="charsG"><span class="st">—</span></div></div>
+      <div class="card"><h3>Falas <small id="progTxt"></small></h3><div class="lines" id="lines"></div></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal" id="helpM"><div class="mbox"><h2>Como jogar</h2>
+  <ol>
+    <li>Arranja um pacote: no <a href="https://gamebanana.com/mods/cats/44064" target="_blank" rel="noopener" style="color:var(--teal)">GameBanana (Dub Mode)</a> há centenas de cenas. Descarrega e carrega o .zip, .rar ou .7z em <b>Escolher pacote</b>. Da primeira vez o vídeo é otimizado (cerca de 1 minuto); podes jogar enquanto isso.</li>
+    <li>Para jogar com amigos: <b>Criar sala</b> e envia o código. Eles abrem este mesmo site, escrevem o código e recebem o pacote automaticamente (não precisam de o descarregar).</li>
+    <li>Cada um escolhe a sua personagem em <b>Personagens</b>.</li>
+    <li><kbd>Espaço</kbd> ouve o original · <kbd>R</kbd> grava (3‑2‑1) · <kbd>P</kbd> ouve a tua · <kbd>←</kbd> <kbd>→</kbd> muda de fala · <kbd>N</kbd> salta para a tua próxima fala por gravar. Depois de gravar, a tua versão toca sozinha.</li>
+    <li>Nas ondas, a tua voz (azul) aparece por cima da original (rosa). Arrasta‑a ou carrega em <b>Auto‑sincronizar</b>.</li>
+    <li>Escolhe um efeito de voz: podes trocar a qualquer momento.</li>
+    <li><b>Ver dobragem</b>: na sala começa ao mesmo tempo para todos.</li>
+  </ol>
+  <p style="color:var(--muted);font-size:13px">Usa auscultadores. Os pacotes e as gravações ficam só no teu browser; numa sala, vão diretamente para os teus amigos. Podes instalar o Dub Party como app com o botão <b>⬇ Instalar</b> (ou no menu do browser).</p>
+  <button class="b" data-close>Fechar</button>
+</div></div>
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div id="loadingT">A carregar…</div></div>
+
+<script>
+'use strict';
+/* ===== utils ===== */
+const $=s=>document.querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const once=(el,ev)=>new Promise(r=>el.addEventListener(ev,r,{once:true}));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=t=>{t=Math.max(0,t||0);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0')};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+let toastT;function toast(msg,ms=2600){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms)}
+function loading(msg){const l=$('#loading');if(msg){$('#loadingT').textContent=msg;l.classList.add('on')}else l.classList.remove('on')}
+const COLORS=['#19c6d6','#f472b6','#facc15','#a78bfa','#4ade80','#fb923c','#60a5fa','#f87171'];
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+const toAB=x=>x instanceof ArrayBuffer?x:ArrayBuffer.isView(x)?x.buffer.slice(x.byteOffset,x.byteOffset+x.byteLength):x;
+
+/* ===== IndexedDB ===== */
+const DB=(()=>{let p;function open(){return p||(p=new Promise((res,rej)=>{const r=indexedDB.open('dubparty',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('packs',{keyPath:'id'});d.createObjectStore('takes',{keyPath:'k'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function tx(store,mode,fn){const d=await open();return new Promise((res,rej)=>{const t=d.transaction(store,mode);const out=fn(t.objectStore(store));t.oncomplete=()=>res(out instanceof IDBRequest?out.result:out);t.onerror=()=>rej(t.error)})}
+return{get:(s,k)=>tx(s,'readonly',st=>st.get(k)),put:(s,v)=>tx(s,'readwrite',st=>{st.put(v)}),del:(s,k)=>tx(s,'readwrite',st=>{st.delete(k)}),all:s=>tx(s,'readonly',st=>st.getAll())}})();
+
+/* ===== audio ===== */
+let AC=null;function ctx(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});return AC}
+const TAKE_SR=48000,PRE=0.25,TAIL=0.35;
+
+/* ===== state ===== */
+const S={pack:null,idx:0,takes:{},myChars:new Set(),busy:null,packs:[],blob:null};
+const settings={micDelay:0,micId:''};
+try{Object.assign(settings,JSON.parse(LS.get('dubparty-settings','{}')))}catch{}
+const saveSettings=()=>LS.set('dubparty-settings',JSON.stringify(settings));
+
+/* ===== pack parsing ===== */
+function parseIni(text){const o={};for(const raw of text.split(/\r?\n/)){const m=raw.match(/^\s*([A-Za-z_]\w*)\s*=\s*(.*)$/);if(!m)continue;let v=m[2].trim();try{v=JSON.parse(v)}catch{v=v.replace(/^"(.*)"$/,'$1')}o[m[1]]=v}return o}
+const arr=v=>Array.isArray(v)?v:(v==null||v===''?[]:[v]);
+const AUD=['mp3','ogg','wav','opus','m4a','webm'],IMG=['png','jpg','jpeg','webp','gif'];
+function voiceBounds(buf){const x=buf.getChannelData(0),sr=buf.sampleRate,w=Math.round(sr*0.02),n=Math.floor(x.length/w);if(!n)return[0,buf.duration];
+  const e=new Float32Array(n);let pk=0;for(let i=0;i<n;i++){let s=0;for(let k=i*w;k<(i+1)*w;k++)s+=x[k]*x[k];e[i]=Math.sqrt(s/w);pk=Math.max(pk,e[i])}
+  const th=Math.max(pk*0.06,1e-4);let a=0,b=n-1;while(a<n&&e[a]<th)a++;while(b>a&&e[b]<th)b--;
+  return[Math.max(0,a*w/sr-0.03),Math.min(buf.duration,(b+1)*w/sr+0.06)]}
+async function readPack(blob,onStep){
+  const zip=await JSZip.loadAsync(blob);
+  const files={};zip.forEach((p,f)=>{if(!f.dir)files[p]=f});
+  const paths=Object.keys(files);
+  const anchor=paths.find(p=>/(^|\/)_pack_info\.(ini|txt)$/i.test(p))||paths.find(p=>/(^|\/)dub_video\.\w+$/i.test(p));
+  if(!anchor)throw new Error('Não encontrei _pack_info.ini nem dub_video neste zip.');
+  const root=anchor.includes('/')?anchor.slice(0,anchor.lastIndexOf('/')+1):'';
+  const F={};for(const p of paths)if(p.startsWith(root)&&!p.slice(root.length).includes('/'))F[p.slice(root.length).toLowerCase()]={name:p.slice(root.length),f:files[p]};
+  const find=(base,exts)=>{for(const e of exts){const k=(base+'.'+e).toLowerCase();if(F[k])return F[k]}return null};
+  let info={};const pi=F['_pack_info.ini']||F['_pack_info.txt'];if(pi)info=parseIni(await pi.f.async('string'));
+  const title=info.title||root.replace(/\/$/,'')||'Pacote';
+  const lines=[],audioBy={};
+  for(const k of Object.keys(F).filter(k=>/\.(ini|txt)$/.test(k)&&!k.startsWith('_pack_info'))){
+    const base=F[k].name.replace(/\.(ini|txt)$/i,'');
+    const d=parseIni(await F[k].f.async('string'));
+    const ts=arr(d.dub_timestamps).map(Number).filter(n=>isFinite(n));if(!ts.length)continue;
+    const chars=arr(d.dub_characters);const af=find(base,AUD);if(!af)continue;audioBy[base]=af;
+    const imgF=(d.image&&F[String(d.image).toLowerCase()])||find(base,IMG);
+    ts.forEach((t,i)=>lines.push({id:base+'@'+i,base,t,caption:String(d.caption||''),char:String(chars[i]??chars[0]??'?'),imgF}));
+  }
+  if(!lines.length)throw new Error('Este zip não tem falas.');
+  lines.sort((a,b)=>a.t-b.t||a.base.localeCompare(b.base));
+  const A=ctx(),bufs={},bases=Object.keys(audioBy);let n=0;
+  for(const b of bases){onStep&&onStep(`A preparar falas ${++n}/${bases.length}`);try{bufs[b]=await A.decodeAudioData(await audioBy[b].f.async('arraybuffer'))}catch(e){console.warn('audio',b,e)}}
+  const urlCache=new Map();const urlOf=async x=>{if(!x)return'';if(!urlCache.has(x.name))urlCache.set(x.name,URL.createObjectURL(await x.f.async('blob')));return urlCache.get(x.name)};
+  const L=[];for(const l of lines){if(!bufs[l.base])continue;l.buf=bufs[l.base];l.dur=l.buf.duration;l.img=await urlOf(l.imgF);delete l.imgF;L.push(l)}
+  const chars=[],seen={};
+  for(const l of L){if(!seen[l.char]){const f=find(l.char,IMG);seen[l.char]={name:l.char,color:COLORS[chars.length%COLORS.length],img:f?await urlOf(f):l.img,count:0};chars.push(seen[l.char])}seen[l.char].count++}
+  L.forEach(l=>l.color=seen[l.char].color);
+  // each take is cut before the same character's next line, so nothing bleeds into it
+  L.forEach((l,i)=>{const nx=L.slice(i+1).find(o=>o.char===l.char&&o.t>l.t+0.05);l.cap=Math.min(l.dur+TAIL,nx?nx.t-l.t-0.03:99)});
+  // the bit of the clip played for a line: from the end of the previous line (any character)
+  // to the start of the next one, so nobody else's line shows up before or after yours
+  // where the voice really starts/ends inside each file (many files have silent padding)
+  const vb=new Map();for(const l of L){if(!vb.has(l.buf))vb.set(l.buf,voiceBounds(l.buf));const v=vb.get(l.buf);l.vs=v[0];l.ve=v[1]}
+  L.forEach(l=>{
+    let prevEnd=0,nextT=Infinity;
+    for(const o of L){if(o===l)continue;
+      if(o.t<l.t-0.05)prevEnd=Math.max(prevEnd,o.t+o.ve);
+      else if(o.t>l.t+0.05)nextT=Math.min(nextT,o.t+o.vs)}
+    l.prevEnd=prevEnd;
+    l.segStart=Math.max(0,Math.min(l.t+l.vs-0.05,Math.max(l.t-LEAD,prevEnd+0.08)));
+    l.segEnd=Math.max(l.t+l.ve+0.05,Math.min(l.t+l.dur+TAIL,nextT-0.12));
+  });
+  onStep&&onStep('A carregar o vídeo…');
+  const vf=find('dub_video',['webm','mp4','ogv','ogg','mov']);
+  let videoUrl='',videoType='';if(vf){const vb=await vf.f.async('blob');const ext=vf.name.split('.').pop().toLowerCase();videoType={ogv:'video/ogg',ogg:'video/ogg',webm:'video/webm',mp4:'video/mp4',mov:'video/quicktime'}[ext]||'video/ogg';videoUrl=URL.createObjectURL(new Blob([vb],{type:videoType}))}
+  const bf=find('_backing_track',AUD);let backing=null;if(bf){try{backing=await A.decodeAudioData(await bf.f.async('arraybuffer'))}catch(e){console.warn('backing',e)}}
+  const iconF=(info.icon&&F[String(info.icon).toLowerCase()])||F['icon.png']||null;
+  const icon=iconF?await urlOf(iconF):(chars[0]&&chars[0].img)||'';
+  const duration=Math.max(backing?backing.duration:0,...L.map(l=>l.t+l.dur));
+  return{id:title+'::'+blob.size,title,icon,lines:L,chars,videoUrl,videoType,backing,duration,urls:[...urlCache.values(),videoUrl]};
+}
+async function packMeta(blob){try{const zip=await JSZip.loadAsync(blob);let info={},pi=null,icon=null,firstImg=null,lines=0;zip.forEach((p,f)=>{if(!f.dir&&/_pack_info\.(ini|txt)$/i.test(p))pi=f});if(pi)info=parseIni(await pi.async('string'));zip.forEach((p,f)=>{if(f.dir)return;const n=p.split('/').pop().toLowerCase();if(info.icon&&n===String(info.icon).toLowerCase())icon=f;else if(!icon&&n==='icon.png')icon=f;else if(!firstImg&&/\.(png|jpg|jpeg|webp)$/.test(n))firstImg=f;if(/\.(ini|txt)$/.test(n)&&!/_pack_info/.test(n))lines++});const ib=icon||firstImg;return{title:info.title||(Object.keys(zip.files)[0]||'Pacote').split('/')[0],lines,icon:ib?await ib.async('blob'):null}}catch{return{title:'Pacote',lines:0,icon:null}}}
+
+/* ===== video: whole file loaded first, seeks hidden until the frame is clean ===== */
+const natVid=$('#vid'),still=$('#still');
+let vid=natVid,videoOk=false;
+// .ogv (Theora) only plays natively in Firefox/Floorp; elsewhere decode it with ogv.js
+const OGV_BASE='https://cdn.jsdelivr.net/npm/ogv@1.9.0/dist';
+let ogvLoad=null;
+function loadOgv(){return ogvLoad||(ogvLoad=new Promise((res,rej)=>{const s=document.createElement('script');s.src=OGV_BASE+'/ogv.js';s.onload=()=>{window.OGVLoader.base=OGV_BASE;res()};s.onerror=()=>{ogvLoad=null;rej(new Error('ogv.js'))};document.head.appendChild(s)}))}
+function useNative(){if(vid!==natVid){try{vid.pause()}catch{}vid.remove();vid=natVid;natVid.hidden=false}}
+async function tryNative(url){
+  natVid.src=url;natVid.load();
+  const ok=await Promise.race([new Promise(r=>{natVid.addEventListener('canplaythrough',()=>r(true),{once:true});natVid.addEventListener('error',()=>r(false),{once:true})}),sleep(20000).then(()=>false)]);
+  return ok&&natVid.videoWidth>0;
+}
+// Read keyframe times straight from the Ogg/Theora stream, so every seek lands on a clean frame.
+let KF=null;
+async function theoraKeyframes(url){
+  const buf=new Uint8Array(await (await fetch(url)).arrayBuffer()),dv=new DataView(buf.buffer);
+  let serial=null,shift=6,fps=30,vrev=1;const set=new Set();
+  for(let p=0;p+27<buf.length;){
+    if(buf[p]!==0x4f||buf[p+1]!==0x67||buf[p+2]!==0x67||buf[p+3]!==0x53){p++;continue}
+    const ns=buf[p+26];let len=0;for(let i=0;i<ns;i++)len+=buf[p+27+i];
+    const data=p+27+ns,ser=dv.getUint32(p+14,true);
+    if(serial===null&&buf[data]===0x80&&String.fromCharCode(...buf.subarray(data+1,data+7))==='theora'){
+      serial=ser;vrev=buf[data+9];const frn=dv.getUint32(data+22),frd=dv.getUint32(data+26);fps=frd?frn/frd:30;shift=(((buf[data+40]<<8)|buf[data+41])>>5)&31;
+    }else if(ser===serial){
+      const lo=dv.getUint32(p+6,true),hi=dv.getInt32(p+10,true);
+      if(!(lo===0xffffffff&&hi===-1)){const g=(BigInt(hi)<<32n)|BigInt(lo);const k=Number(g>>BigInt(shift))-(vrev>=1?1:0);if(k>=0)set.add(k)}
+    }
+    p=data+len;
+  }
+  if(serial===null)return null;
+  const t=[...set].sort((a,b)=>a-b).map(k=>k/fps);if(!t.length||t[0]>0)t.unshift(0);return t;
+}
+function kfBefore(t){if(!KF)return t;let lo=0,hi=KF.length-1,r=0;while(lo<=hi){const m=(lo+hi)>>1;if(KF[m]<=t+0.001){r=KF[m];lo=m+1}else hi=m-1}return r}
+let vidGen=0;
+async function tryOgv(url,g){
+  let kf=null;try{kf=await theoraKeyframes(url)}catch(e){console.warn('keyframes',e)}
+  if(g!==vidGen)return false;KF=kf;
+  await loadOgv();if(g!==vidGen)return false;
+  natVid.removeAttribute('src');natVid.load();natVid.hidden=true;
+  const p=new OGVPlayer({worker:false,wasm:true});
+  p.className='ogvp hide';p.muted=true;
+  natVid.after(p);vid=p;
+  p.src=url;p.load();
+  const ok=await Promise.race([new Promise(r=>{p.addEventListener('loadedmetadata',()=>r(true));p.addEventListener('error',()=>r(false))}),sleep(30000).then(()=>false)]);
+  if(g!==vidGen){try{p.pause()}catch{}p.remove();return false}
+  if(!ok||!p.videoWidth)return false;
+  // decode the first frame so the first seek is clean
+  p.currentTime=0.01;await Promise.race([once(p,'seeked'),sleep(4000)]);
+  return true;
+}
+async function prepareVideo(url,type){
+  const g=++vidGen;videoOk=false;KF=null;$('#codecWarn').hidden=true;useNative();natVid.removeAttribute('src');natVid.load();
+  if(!url)return;
+  const nok=await tryNative(url);if(g!==vidGen)return;videoOk=nok;
+  if(!videoOk&&/ogg/.test(type||'')){loading('A preparar o vídeo .ogv para este browser…');try{const ok=await tryOgv(url,g);if(g!==vidGen)return;videoOk=ok}catch(e){console.warn(e);if(g===vidGen)useNative()}}
+  $('#codecWarn').hidden=videoOk;
+}
+function frameReady(){return new Promise(r=>{if(vid.requestVideoFrameCallback){let done=false;vid.requestVideoFrameCallback(()=>{done=true;r()});setTimeout(()=>{if(!done)r()},250)}else requestAnimationFrame(()=>requestAnimationFrame(r))})}
+let seekSeq=0;const LEAD=0.4; // seconds of video before the line starts
+async function seekTo(t,exact=true){
+  if(!videoOk)return;const my=++seekSeq;
+  const D=vid.duration;t=Math.max(0,isFinite(D)&&D>1?Math.min(t,D-0.05):t);
+  if(vid===natVid){
+    if(Math.abs(vid.currentTime-t)<0.02&&!vid.seeking&&vid.readyState>=2){vid.classList.remove('hide');return}
+    vid.classList.add('hide');vid.currentTime=t;await Promise.race([once(vid,'seeked'),sleep(3000)]);await Promise.race([new Promise(r=>requestAnimationFrame(r)),sleep(40)]);
+    if(my===seekSeq)vid.classList.remove('hide');return;
+  }
+  // ogv.js: jumping straight to a non-keyframe gives artefacts. Jump to the keyframe before,
+  // then play hidden up to the exact spot and pause there ("pre-load"), so pressing play starts right away.
+  const ct=vid.currentTime,k=kfBefore(t)+0.001;
+  if(vid.paused&&!vid.seeking&&(Math.abs(ct-t)<0.1||(!exact&&ct>=k-0.05&&ct<=t+0.05))){vid.classList.remove('hide');return}
+  vid.classList.add('hide');vid.pause();
+  for(let i=0;i<3;i++){vid.currentTime=k;await Promise.race([once(vid,'seeked'),sleep(3000)]);if(my!==seekSeq)return;if(Math.abs(vid.currentTime-k)<0.25)break}
+  if(exact&&t-vid.currentTime>0.06){
+    const wasMuted=vid.muted;vid.muted=true;try{const pr=vid.play();pr&&pr.catch&&pr.catch(()=>{})}catch{}
+    const deadline=performance.now()+(t-vid.currentTime+3)*1000;
+    while(my===seekSeq&&vid.currentTime<t-0.04&&performance.now()<deadline)await sleep(15);
+    if(my!==seekSeq)return;vid.pause();vid.muted=wasMuted;
+  }
+  await frameReady();
+  if(my===seekSeq)vid.classList.remove('hide');
+}
+function showVisual(l){
+  still.src=(l&&l.img)||(S.pack&&S.pack.icon)||'';
+  if(videoOk){still.classList.add('hide')}else{vid.classList.add('hide');still.classList.toggle('hide',!still.src)}
+}
+
+/* ===== voice effects ===== */
+function pitchShift(x,sr,semis){
+  if(!semis)return x;
+  const r=Math.pow(2,semis/12),W=Math.max(256,Math.round(sr*0.045)),y=new Float32Array(x.length),N=x.length,h=W*0.5;
+  let ph=0;const step=(1-r)/W;
+  for(let n=0;n<N;n++){let s=0;for(let k=0;k<2;k++){let p=ph+k*0.5;p-=Math.floor(p);const pos=n+h-p*W;if(pos>=0&&pos<N-1){const i=pos|0,f=pos-i,w=Math.sin(Math.PI*p);s+=(x[i]+(x[i+1]-x[i])*f)*w*w}}y[n]=s;ph+=step;ph-=Math.floor(ph)}
+  return y;
+}
+function distCurve(k){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+k)*x/(1+k*Math.abs(x))}return c}
+function makeIR(c,secs,decay){const len=Math.floor(c.sampleRate*secs),b=c.createBuffer(1,len,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);return b}
+const N={
+  filt(c,i,type,f,q=0.7,g=0){const n=c.createBiquadFilter();n.type=type;n.frequency.value=f;n.Q.value=q;n.gain.value=g;i.connect(n);return n},
+  dist(c,i,k){const n=c.createWaveShaper();n.curve=distCurve(k);n.oversample='2x';i.connect(n);return n},
+  gain(c,i,v){const n=c.createGain();n.gain.value=v;i.connect(n);return n},
+  ring(c,i,f){const n=c.createGain();n.gain.value=0;const o=c.createOscillator();o.frequency.value=f;o.connect(n.gain);o.start();i.connect(n);return n},
+  echo(c,i,t,fb,mix=0.5){const out=c.createGain();i.connect(out);const d=c.createDelay(2);d.delayTime.value=t;const g=c.createGain();g.gain.value=fb;i.connect(d);d.connect(g);g.connect(d);const m=c.createGain();m.gain.value=mix;d.connect(m);m.connect(out);return out},
+  verb(c,i,secs,decay,mix){const out=c.createGain();N.gain(c,i,1-mix*0.5).connect(out);const cv=c.createConvolver();cv.buffer=makeIR(c,secs,decay);i.connect(cv);const w=c.createGain();w.gain.value=mix;cv.connect(w);w.connect(out);return out},
+  vibrato(c,i,rate,depth){const d=c.createDelay(0.1);d.delayTime.value=0.012;const o=c.createOscillator();o.frequency.value=rate;const g=c.createGain();g.gain.value=depth;o.connect(g);g.connect(d.delayTime);o.start();i.connect(d);return d},
+  noise(c,out,level){const b=c.createBuffer(1,c.length,c.sampleRate),d=b.getChannelData(0);for(let k=0;k<c.length;k++)d[k]=(Math.random()*2-1)*level;const s=c.createBufferSource();s.buffer=b;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=2000;s.connect(f);f.connect(out);s.start()}
+};
+const FX={
+  original:{name:'🎤 Normal'},
+  grave:{name:'🐻 Grave',pitch:-5,build:(c,i)=>N.filt(c,i,'lowshelf',200,0.7,3)},
+  agudo:{name:'🐭 Agudo',pitch:5},
+  desenho:{name:'🐿 Desenho animado',pitch:9,build:(c,i)=>N.filt(c,i,'highpass',220)},
+  robo:{name:'🤖 Robô',build:(c,i)=>{const r=N.ring(c,i,52);const e=N.echo(c,r,0.011,0.55,0.8);return N.gain(c,N.dist(c,e,3),0.8)}},
+  monstro:{name:'👹 Monstro',pitch:-10,build:(c,i)=>N.filt(c,N.dist(c,N.gain(c,i,1.6),6),'lowpass',2600)},
+  alien:{name:'👽 Alien',pitch:4,build:(c,i)=>{const o=c.createGain();N.gain(c,i,0.6).connect(o);N.ring(c,N.vibrato(c,i,7,0.003),330).connect(o);return o}},
+  radio:{name:'📻 Rádio',build:(c,i)=>{let n=N.filt(c,i,'highpass',450);n=N.filt(c,n,'lowpass',3200);n=N.dist(c,n,18);const o=N.gain(c,n,0.6);N.noise(c,o,0.012);return o}},
+  megafone:{name:'📢 Megafone',build:(c,i)=>{let n=N.filt(c,i,'bandpass',1700,1.1);n=N.dist(c,N.gain(c,n,3),45);return N.gain(c,N.filt(c,n,'highpass',600),0.5)}},
+  caverna:{name:'🕳 Caverna',tail:3.5,build:(c,i)=>N.verb(c,N.echo(c,i,0.17,0.3,0.4),3.2,2,0.8)},
+  eco:{name:'🏔 Eco',tail:2,build:(c,i)=>N.echo(c,i,0.3,0.42,0.55)},
+  coro:{name:'👥 Coro',chorus:true,tail:0.6,build:(c,i)=>N.verb(c,i,0.8,3,0.3)},
+  agua:{name:'🌊 Debaixo d’água',tail:0.8,build:(c,i)=>N.verb(c,N.filt(c,N.vibrato(c,i,5,0.004),'lowpass',650,2),0.7,2,0.4)}
+};
+function chorusMix(x,sr){const a=pitchShift(x,sr,0.2),b=pitchShift(x,sr,-0.2),d1=Math.round(sr*0.018),d2=Math.round(sr*0.029),y=new Float32Array(x.length);for(let n=0;n<x.length;n++)y[n]=(x[n]+0.7*(n>=d1?a[n-d1]:0)+0.7*(n>=d2?b[n-d2]:0))*0.6;return y}
+async function renderFx(raw,sr,fxId,p){
+  const P=FX[fxId]||FX.original;p=p||{};
+  const semis=(P.pitch||0)+(+p.pitch||0);
+  let x=semis?pitchShift(raw,sr,semis):raw;if(P.chorus)x=chorusMix(x,sr);
+  const c=new OfflineAudioContext(1,x.length+Math.ceil(sr*(P.tail||0.05)),sr);
+  const b=c.createBuffer(1,x.length,sr);b.copyToChannel(x,0);
+  const src=c.createBufferSource();src.buffer=b;
+  if(P.build)P.build(c,src).connect(c.destination);else src.connect(c.destination);
+  src.start();const out=await c.startRendering();
+  // same loudness for every effect
+  let rp=0;for(let i=0;i<raw.length;i++){const v=Math.abs(raw[i]);if(v>rp)rp=v}
+  const d=out.getChannelData(0);let op=0;for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>op)op=v}
+  const k=op>0?Math.min(0.97,rp)/op:1;for(let i=0;i<d.length;i++)d[i]*=k;
+  return out;
+}
+function rawOf(t){if(!t._raw){const i16=new Int16Array(t.pcm),f=new Float32Array(i16.length);for(let k=0;k<i16.length;k++)f[k]=i16[k]/32768;t._raw=f}return t._raw}
+async function fxBuf(t){const key=t.effect+'|'+JSON.stringify(t.params||{})+'|'+t.v;if(t._fxKey!==key||!t._fx){t._fx=await renderFx(rawOf(t),t.sr,t.effect,t.params);t._fxKey=key}return t._fx}
+
+/* ===== takes ===== */
+const takeKey=id=>S.pack.id+'|'+id;
+function serialTake(t){const o={};for(const k of['lineId','pcm','sr','pre','effect','params','offset','by','byName','char','v'])o[k]=t[k];return o}
+async function storeTake(t){S.takes[t.lineId]=t;try{await DB.put('takes',{k:takeKey(t.lineId),pack:S.pack.id,...serialTake(t)})}catch(e){console.warn(e)}}
+async function removeTake(id){delete S.takes[id];try{await DB.del('takes',takeKey(id))}catch{}}
+async function loadTakesFromDB(){S.takes={};try{for(const t of await DB.all('takes'))if(t.pack===S.pack.id&&S.pack.lines.some(l=>l.id===t.lineId)){delete t.k;delete t.pack;S.takes[t.lineId]=t}}catch(e){console.warn(e)}}
+
+/* ===== match score ===== */
+function envelope(data,sr,start,len,hop=0.02){const n=Math.max(1,Math.floor(len/hop)),out=new Float32Array(n),hs=Math.floor(sr*hop);for(let i=0;i<n;i++){const a=Math.floor((start+i*hop)*sr);let s=0,c=0;for(let k=0;k<hs;k++){const j=a+k;if(j>=0&&j<data.length){s+=data[j]*data[j];c++}}out[i]=c?Math.sqrt(s/c):0}let m=0;for(const v of out)m=Math.max(m,v);if(m>0)for(let i=0;i<n;i++)out[i]/=m;return out}
+function compare(l,t,shift=0){
+  const eo=envelope(l.buf.getChannelData(0),l.buf.sampleRate,0,l.dur),et=envelope(rawOf(t),t.sr,t.pre-(t.offset+shift),l.dur);
+  let dot=0,na=0,nb=0,inter=0,uni=0;
+  for(let i=0;i<eo.length;i++){const a=eo[i],b=et[i]||0;dot+=a*b;na+=a*a;nb+=b*b;const A=a>0.12,B=b>0.12;if(A&&B)inter++;if(A||B)uni++}
+  const corr=na&&nb?dot/Math.sqrt(na*nb):0,iou=uni?inter/uni:0;
+  return clamp(Math.round(100*(0.55*iou+0.45*Math.max(0,(corr-0.3)/0.7))),0,100);
+}
+function bestShift(l,t){let best=0,bs=-1;for(let s=-0.4;s<=0.4001;s+=0.02){const v=compare(l,t,s);if(v>bs){bs=v;best=s}}return Math.round(best*1000)/1000}
+
+/* ===== render ===== */
+const cur=()=>S.pack&&S.pack.lines[S.idx];
+const ownerOf=c=>NET.active?NET.cast[c]:(S.myChars.has(c)?'me':null);
+function isMine(l){if(NET.active)return NET.cast[l.char]===NET.myId;return S.myChars.size?S.myChars.has(l.char):true}
+const canRecord=l=>!NET.active||NET.cast[l.char]===NET.myId;
+function renderAll(){renderLine();renderStrip();renderLines();renderShelf();renderMP();renderChars();if(NET.host)setTimeout(()=>NET.checkDone(),400)}
+function renderLine(){
+  const p=S.pack,l=cur();
+  $('#empty').hidden=!!p;$('#packName').textContent=p?p.title:'Escolher pacote';
+  for(const id of['listenBtn','recBtn','playTakeBtn','prevBtn','nextBtn','watchBtn','exportBtn','clearBtn','fxPitch'])$('#'+id).disabled=!p;
+  if(!p){$('#cap').hidden=true;$('#chipL').textContent='—';$('#chipR').hidden=true;drawWave();renderFx2(null);return}
+  $('#chipL').textContent=`${S.idx+1} / ${p.lines.length} · ${fmt(l.t)}`;
+  showCaption(l);
+  const take=S.takes[l.id],can=canRecord(l);
+  $('#playTakeBtn').disabled=!take;
+  $('#recBtn').disabled=!can||(S.busy&&S.busy!=='record');
+  $('#recBtn').classList.toggle('on',S.busy==='record');
+  $('#recTxt').textContent=S.busy==='record'?'Parar':!can?(NET.cast[l.char]?'De '+playerName(NET.cast[l.char]):'Escolhe '+l.char):take?'Regravar':'Gravar';
+  $('#autoAlign').disabled=$('#delTake').disabled=!take||!can;
+  $('#listenBtn').classList.toggle('playing',S.busy==='listen');$('#playTakeBtn').classList.toggle('playing',S.busy==='take');
+  const mine=isMine(l)&&(NET.active?true:S.myChars.size>0);
+  $('#lnInfo').innerHTML=`<b style="color:${l.color}">${esc(l.char)}</b> · fala ${S.idx+1} de ${p.lines.length}`+(take?` · <span style="color:var(--teal)">✓ gravada${take.byName&&take.by!==(NET.myId||'me')?' por '+esc(take.byName):''}</span>`:mine?' · <span style="color:var(--gold)">tua, por gravar</span>':'');
+  $('#nextMineBtn').hidden=!S.pack.lines.some(isMine)||(!NET.active&&!S.myChars.size);
+  const sc=take?compare(l,take):null;
+  $('#chipR').hidden=sc==null;$('#chipR').textContent=sc==null?'':'🎯 '+sc+'%';
+  $('#stText').textContent=take?(take.byName&&take.by!==(NET.myId||'me')?'Gravado por '+take.byName:''):(can?'':'Fala de outra pessoa');
+  renderFx2(l);drawWave();
+  if(!S.busy){showVisual(l);seekTo(l.segStart)}
+  document.querySelectorAll('.ln').forEach(e=>e.classList.toggle('cur',+e.dataset.i===S.idx));
+}
+function showCaption(l){if(!l){$('#cap').hidden=true;return}$('#cap').hidden=false;$('#capChar').textContent=l.char.toUpperCase();$('#capChar').style.background=l.color;$('#capText').textContent=l.caption}
+function renderStrip(){
+  const st=$('#strip');st.querySelectorAll('i').forEach(e=>e.remove());if(!S.pack)return;
+  const D=S.pack.duration||1;
+  S.pack.lines.forEach((l,i)=>{const e=document.createElement('i');e.style.left=(l.t/D*100)+'%';e.style.background=l.color;if(S.takes[l.id])e.classList.add('done');if(i===S.idx)e.classList.add('cur');e.title=l.char+': '+l.caption;st.appendChild(e)});
+  $('#stripPh').style.left=(cur().t/D*100)+'%';
+}
+function renderLines(){
+  const box=$('#lines');if(!S.pack){box.innerHTML='';$('#progTxt').textContent='';return}
+  const mine=S.pack.lines.filter(isMine),done=mine.filter(l=>S.takes[l.id]).length;
+  $('#progTxt').textContent=mine.length?`${done}/${mine.length} tuas`:'';
+  box.innerHTML=S.pack.lines.map((l,i)=>{const t=S.takes[l.id];return`<div class="ln ${i===S.idx?'cur':''}" data-i="${i}" title="${esc(l.char)}: ${esc(l.caption)}"><span class="n">${i+1}</span><span class="d" style="background:${l.color}"></span><span class="t"><b style="color:${l.color};font-weight:600">${esc(l.char)}</b> ${esc(l.caption)}</span><span class="s">${t?'✓ '+compare(l,t)+'%':''}</span></div>`}).join('');
+  const c=box.querySelector('.cur');if(c&&!S.busy)c.scrollIntoView({block:'nearest'});
+}
+$('#lines').addEventListener('click',e=>{const r=e.target.closest('.ln');if(r)select(+r.dataset.i)});
+$('#strip').addEventListener('click',e=>{if(!S.pack||S.busy)return;const r=e.currentTarget.getBoundingClientRect(),t=(e.clientX-r.left)/r.width*S.pack.duration;let bi=0,bd=1e9;S.pack.lines.forEach((l,i)=>{const d=Math.abs(l.t-t);if(d<bd){bd=d;bi=i}});select(bi)});
+function select(i){if(!S.pack)return;stopAll(true);S.idx=clamp(i,0,S.pack.lines.length-1);renderLine();renderStrip()}
+function step(dir){if(!S.pack)return;select(S.idx+dir)}
+function nextMine(){if(!S.pack)return;const L=S.pack.lines;for(let i=S.idx+1;i<L.length;i++)if(isMine(L[i])&&!S.takes[L[i].id])return select(i);for(let i=S.idx+1;i<L.length;i++)if(isMine(L[i]))return select(i);toast('Não tens mais falas à frente')}
+
+/* ===== effects UI ===== */
+const lastFx=JSON.parse(LS.get('dubparty-lastfx','{}'));
+function renderFx2(l){
+  const take=l&&S.takes[l.id],sel=take?take.effect:(l&&lastFx[l.char]&&lastFx[l.char].fx)||'original';
+  const pitch=take?(take.params&&take.params.pitch)||0:(l&&lastFx[l.char]&&lastFx[l.char].pitch)||0;
+  const dis=!l||(take&&!canRecord(l));
+  $('#fx').innerHTML=Object.entries(FX).map(([k,v])=>`<button data-fx="${k}" class="${k===sel?'on':''}" ${dis?'disabled':''}>${v.name}</button>`).join('');
+  $('#fxPitch').value=pitch;$('#fxPitchV').textContent=(pitch>0?'+':'')+pitch;$('#fxPitch').disabled=!!dis;
+}
+let fxT;
+async function setFx(fx,pitch){
+  const l=cur();if(!l)return;
+  lastFx[l.char]={fx,pitch};LS.set('dubparty-lastfx',JSON.stringify(lastFx));
+  const t=S.takes[l.id];
+  if(t&&canRecord(l)){t.effect=fx;t.params={pitch};t.v=Date.now();await storeTake(t);NET.sendTakeMeta(t);renderFx2(l);clearTimeout(fxT);fxT=setTimeout(()=>play('take'),120)}else renderFx2(l);
+}
+$('#fx').addEventListener('click',e=>{const b=e.target.closest('button[data-fx]');if(b)setFx(b.dataset.fx,+$('#fxPitch').value)});
+$('#fxPitch').oninput=()=>{const v=+$('#fxPitch').value;$('#fxPitchV').textContent=(v>0?'+':'')+v};
+$('#fxPitch').onchange=()=>{const on=$('#fx .on');setFx(on?on.dataset.fx:'original',+$('#fxPitch').value)};
+
+/* ===== waves ===== */
+const cv=$('#wave');let liveRec=null,playhead=null;
+const waveRange=l=>({a:-0.5,b:l.dur+TAIL+0.25});
+function drawWave(){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(!W)return;
+  if(cv.width!==W*dpr||cv.height!==H*dpr){cv.width=W*dpr;cv.height=H*dpr}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  g.fillStyle='#1d2b2e';g.fillRect(0,H/2,W,1);
+  const l=cur();if(!l)return;
+  const {a,b}=waveRange(l),X=t=>(t-a)/(b-a)*W;
+  g.fillStyle='rgba(224,64,200,.06)';g.fillRect(X(0),0,X(l.dur)-X(0),H);
+  const draw=(data,sr,t0,color,alpha)=>{g.fillStyle=color;g.globalAlpha=alpha;let pk=0.05;for(let i=0;i<data.length;i+=7){const v=Math.abs(data[i]);if(v>pk)pk=v}const h=(H/2-6)*0.95/pk;for(let x=0;x<W;x++){const ta=a+x/W*(b-a),tb=a+(x+1)/W*(b-a),i0=Math.floor((ta-t0)*sr),i1=Math.floor((tb-t0)*sr);if(i1<0||i0>=data.length)continue;let mn=0,mx=0;for(let i=Math.max(0,i0);i<Math.min(data.length,i1);i+=Math.max(1,((i1-i0)/40)|0)){const v=data[i];if(v<mn)mn=v;if(v>mx)mx=v}g.fillRect(x,H/2-mx*h,1,Math.max(1,(mx-mn)*h))}g.globalAlpha=1};
+  draw(l.buf.getChannelData(0),l.buf.sampleRate,0,'#e040c8',.85);
+  const t=S.takes[l.id];
+  if(liveRec)draw(liveRec.data,liveRec.sr,liveRec.t0,'#19c6d6',.85);else if(t)draw(rawOf(t),t.sr,t.offset-t.pre,'#19c6d6',.7);
+  if(playhead!=null&&playhead>=a&&playhead<=b){g.fillStyle='#fff';g.fillRect(X(playhead),0,2,H)}
+}
+window.addEventListener('resize',drawWave);
+let drag=null;
+cv.addEventListener('pointerdown',e=>{const l=cur();if(!l||S.busy)return;const t=S.takes[l.id];if(!t||!canRecord(l))return;drag={x:e.clientX,o:t.offset};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const l=cur(),t=S.takes[l.id],{a,b}=waveRange(l);t.offset=clamp(drag.o+(e.clientX-drag.x)/cv.clientWidth*(b-a),-0.6,0.6);drawWave()});
+cv.addEventListener('pointerup',()=>{if(!drag)return;drag=null;commitMeta()});
+$('#autoAlign').onclick=()=>{const l=cur(),t=S.takes[l.id];if(!t)return;t.offset=clamp(t.offset+bestShift(l,t),-0.6,0.6);commitMeta();toast('Sincronizado')};
+$('#delTake').onclick=async()=>{const l=cur();if(!S.takes[l.id]||!confirm('Apagar a gravação desta fala?'))return;await removeTake(l.id);NET.sendTakeDel(l.id);renderAll()};
+async function commitMeta(){const l=cur(),t=S.takes[l.id];if(!t)return;t.v=Date.now();await storeTake(t);NET.sendTakeMeta(t);renderLine();renderLines()}
+
+/* ===== microphone ===== */
+const MIC={stream:null,node:null,src:null,an:null,chunks:null,ready:null};
+const WORKLET=`class R extends AudioWorkletProcessor{constructor(){super();this.on=false;this.port.onmessage=e=>{this.on=e.data}}process(i){const c=i[0]&&i[0][0];if(this.on&&c)this.port.postMessage({f:currentFrame,d:c.slice(0)});return true}}registerProcessor('rec-proc',R);`;
+async function micReady(){
+  if(MIC.ready)return MIC.ready;
+  MIC.ready=(async()=>{
+    const A=ctx();await A.resume();
+    MIC.stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:settings.micId?{exact:settings.micId}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:false,channelCount:1}});
+    if(!MIC.node){await A.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'})));MIC.node=new AudioWorkletNode(A,'rec-proc');MIC.node.port.onmessage=e=>{if(MIC.chunks){MIC.chunks.push(e.data);onLiveChunk(e.data)}};const z=A.createGain();z.gain.value=0;MIC.node.connect(z);z.connect(A.destination);MIC.an=A.createAnalyser();MIC.an.fftSize=1024}
+    if(MIC.src)MIC.src.disconnect();MIC.src=A.createMediaStreamSource(MIC.stream);MIC.src.connect(MIC.node);MIC.src.connect(MIC.an);
+    listMics();meter();
+  })();
+  try{await MIC.ready}catch(e){MIC.ready=null;throw e}
+}
+async function listMics(){try{const ds=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');$('#micSel').innerHTML='<option value="">Predefinido</option>'+ds.map(d=>`<option value="${esc(d.deviceId)}">${esc(d.label||'Microfone')}</option>`).join('');$('#micSel').value=settings.micId||''}catch{}}
+let meterOn=false;function meter(){if(meterOn)return;meterOn=true;const buf=new Float32Array(1024);const f=()=>{if(MIC.an&&!$('#pop').hidden){MIC.an.getFloatTimeDomainData(buf);let m=0;for(const v of buf)m=Math.max(m,Math.abs(v));$('#micLvl').style.width=Math.min(100,m*140)+'%'}requestAnimationFrame(f)};f()}
+$('#micSel').onchange=async()=>{settings.micId=$('#micSel').value;saveSettings();if(MIC.stream){MIC.stream.getTracks().forEach(t=>t.stop());MIC.ready=null;try{await micReady()}catch(e){toast('Microfone: '+e.message)}}};
+$('#micDelay').value=settings.micDelay;$('#micDelayV').textContent=settings.micDelay;
+$('#micDelay').oninput=()=>{settings.micDelay=+$('#micDelay').value;$('#micDelayV').textContent=settings.micDelay;saveSettings()};
+$('#micTest').onclick=async()=>{try{await micReady();toast('Fala para ver o nível')}catch(e){toast('Não consegui abrir o microfone: '+e.message,4000)}};
+function onLiveChunk(c){if(!liveRec)return;for(let i=0;i<c.d.length;i++){const j=c.f+i-liveRec.startFrame;if(j>=0&&j<liveRec.data.length)liveRec.data[j]=c.d[i]}}
+function resample(x,from,to){if(from===to)return x;const ratio=from/to,n=Math.floor(x.length/ratio),y=new Float32Array(n);for(let i=0;i<n;i++){const a=i*ratio,b=a+ratio;let s=0,c=0;for(let k=Math.floor(a);k<Math.ceil(b)&&k<x.length;k++){s+=x[k];c++}y[i]=c?s/c:0}return y}
+
+/* ===== playback ===== */
+let PB=null;
+function stopAll(silent){
+  if(PB){PB.nodes.forEach(n=>{try{n.stop()}catch{}try{n.disconnect()}catch{}});PB.timers.forEach(clearTimeout);cancelAnimationFrame(PB.raf);PB=null}
+  if(MIC.node)MIC.node.port.postMessage(false);MIC.chunks=null;liveRec=null;
+  vid.pause();playhead=null;$('#count').textContent='';$('#chipL').classList.remove('rec');$('#reacts').hidden=true;
+  const was=S.busy;S.busy=null;$('#watchBtn').textContent='▶ Ver dobragem';$('#watchBtn').classList.remove('on');
+  if(!silent&&was&&S.pack)renderLine();
+  if(NET.host&&was&&was!=='watch')setTimeout(()=>NET.checkDone(),400);
+}
+function srcAt(buf,when,offset=0,stopAt=null,gain=1,fade=0.05){const A=ctx(),s=A.createBufferSource();s.buffer=buf;const g=A.createGain();g.gain.value=gain;s.connect(g);g.connect(A.destination);const now=A.currentTime;if(when<now){offset+=now-when;when=now}if(offset>=buf.duration)return;s.start(when,offset);if(stopAt!=null&&stopAt>when){const fs=Math.max(when,stopAt-fade);g.gain.setValueAtTime(gain,fs);g.gain.linearRampToValueAtTime(0,stopAt);s.stop(stopAt+0.01)}PB.nodes.push(s)}
+async function startMedia(fromT,exact=true){const A=ctx();await A.resume();if(videoOk){await seekTo(fromT,exact);vid.muted=!!S.pack.backing;try{const pr=vid.play();pr&&pr.catch&&pr.catch(()=>{});await Promise.race([pr,sleep(1500)])}catch{}const vt=vid.currentTime;
+  // audio follows the video clock, unless the video ended up somewhere wrong (then trust the target, audio must stay correct)
+  const target=exact?fromT:vt;return{c0:A.currentTime+0.02,m0:(Math.abs(vt-target)<0.3?vt:target)+0.02}}return{c0:A.currentTime+0.08,m0:fromT}}
+async function play(mode){
+  const l=cur();if(!l)return;
+  if(S.busy){const was=S.busy;stopAll();if(was===mode)return}
+  const take=S.takes[l.id];if(mode==='take'&&!take)return;
+  if(mode==='record'){if(!canRecord(l))return toast('Escolhe esta personagem primeiro');try{await micReady()}catch(e){return toast('Não consegui abrir o microfone: '+e.message,4500)}}
+  const A=ctx();const fxb=mode==='take'?await fxBuf(take):null;
+  PB={nodes:[],timers:[],raf:0};S.busy=mode;renderLine();
+  // record: 2 s countdown, but never start inside someone else's line -> the rest of the countdown runs on a still frame
+  const from=mode==='record'?Math.max(0,l.t-2.2,Math.min(l.t-0.05,l.prevEnd+0.03)):l.segStart;
+  const end=mode==='record'?l.t+l.cap:l.segEnd,vEnd=l.segEnd;
+  showVisual(l);
+  if(mode==='record'){let pre=2-(l.t-from);if(pre>0.2){await seekTo(from,false);const t1=performance.now()+pre*1000;
+    while(S.busy===mode&&performance.now()<t1){$('#count').textContent=Math.ceil((t1-performance.now())/1000+(l.t-from));await sleep(50)}if(S.busy!==mode)return}}
+  const {c0,m0}=await startMedia(from,mode!=='record');if(S.busy!==mode)return;
+  const toC=m=>c0+(m-m0);
+  if(S.pack.backing)srcAt(S.pack.backing,toC(from),from,toC(vEnd),mode==='record'?0.7:1,0.12);
+  PB.timers.push(setTimeout(()=>{if(PB)vid.pause()},Math.max(0,(toC(vEnd)-A.currentTime)*1000)));
+  if(mode==='listen')srcAt(l.buf,toC(l.t),0,toC(Math.min(end,l.t+l.dur+0.02)),1,0.03);
+  if(mode==='take')srcAt(fxb,toC(l.t+take.offset-take.pre),0,toC(end),1,0.05);
+  if(mode==='record'){
+    const sr=A.sampleRate,comp=(A.outputLatency||0)+(A.baseLatency||0)+settings.micDelay/1000,rs=toC(l.t-PRE),re=toC(end);
+    liveRec={sr,t0:-PRE,data:new Float32Array(Math.ceil((re-rs)*sr)),startFrame:Math.round((rs+comp)*sr)};
+    MIC.chunks=[];MIC.node.port.postMessage(true);
+    PB.timers.push(setTimeout(()=>finishRecord(l),(re-A.currentTime+comp)*1000+120));
+  }else PB.timers.push(setTimeout(()=>stopAll(),(toC(end)-A.currentTime)*1000+60));
+  const tick=()=>{if(!PB)return;const m=m0+(A.currentTime-c0);playhead=m-l.t;
+    if(mode==='record'){const left=l.t-m;$('#count').textContent=left>0.05?Math.ceil(left):'';$('#chipL').classList.toggle('rec',left<=0.05);if(left<=0.05)$('#chipL').textContent='● REC'}
+    $('#stripPh').style.left=(m/S.pack.duration*100)+'%';drawWave();PB.raf=requestAnimationFrame(tick)};tick();
+}
+async function finishRecord(l){
+  if(!liveRec||S.busy!=='record')return;
+  const {data,sr}=liveRec;stopAll(true);
+  let peak=0;for(const v of data)peak=Math.max(peak,Math.abs(v));
+  if(peak<0.01){renderLine();return toast('Não ouvi nada — vê o microfone em ⚙',4500)}
+  const f=resample(data,sr,TAKE_SR),i16=new Int16Array(f.length);for(let i=0;i<f.length;i++)i16[i]=clamp(Math.round(f[i]*32767),-32768,32767);
+  const on=$('#fx .on');
+  const t={lineId:l.id,pcm:i16.buffer,sr:TAKE_SR,pre:PRE,effect:on?on.dataset.fx:'original',params:{pitch:+$('#fxPitch').value},offset:0,by:NET.myId||'me',byName:myName(),char:l.char,v:Date.now()};
+  t.offset=clamp(bestShift(l,t),-0.25,0.25); // small auto-correction for timing
+  await storeTake(t);NET.sendTake(t);renderAll();
+  toast(`🎯 ${compare(l,t)}% — a ouvir a tua gravação… (R regrava, → seguinte)`,3500);
+  setTimeout(()=>{if(!S.busy&&cur()===l)play('take')},350);
+  if(NET.active&&NET.myId){const me=NET.players.find(p=>p.id===NET.myId);if(me){const r=NET.progress(me);if(r.my.length&&r.done===r.my.length&&!NET.roomDone()){
+    const wait=NET.players.filter(p=>{const q=NET.progress(p);return q.my.length&&q.done<q.my.length}).map(p=>p.name);
+    setTimeout(()=>toast('✅ Acabaste as tuas falas! À espera de '+(wait.join(', ')||'os outros')+'…',5000),3700)}}}
+}
+async function buildPlan(){const items=[];for(const l of S.pack.lines){const t=S.takes[l.id];if(t)items.push({buf:await fxBuf(t),at:l.t+t.offset-t.pre,end:l.t+l.cap});else items.push({buf:l.buf,at:l.t,end:l.t+Math.min(l.cap,l.dur+0.02)})}return items}
+async function runWatch(plan){
+  stopAll(true);PB={nodes:[],timers:[],raf:0};S.busy='watch';$('#watchBtn').textContent='■ Parar';$('#watchBtn').classList.add('on');$('#reacts').hidden=false;$('#bigCount').hidden=true;
+  const A=ctx();const {c0,m0}=await startMedia(0);if(S.busy!=='watch')return;const toC=m=>c0+(m-m0);
+  if(S.pack.backing)srcAt(S.pack.backing,toC(0),0);
+  for(const it of plan)srcAt(it.buf,toC(it.at),0,toC(it.end),1,0.05);
+  const D=S.pack.duration,L=S.pack.lines;
+  PB.timers.push(setTimeout(()=>stopAll(),(toC(D+0.3)-A.currentTime)*1000));
+  const tick=()=>{if(!PB)return;const m=m0+(A.currentTime-c0);let show=null;for(const l of L)if(l.t<=m&&m<l.t+l.dur+0.25)show=l;showCaption(show);if(!videoOk&&show)still.src=show.img||still.src;$('#chipL').textContent=fmt(m)+' / '+fmt(D);$('#stripPh').style.left=(m/D*100)+'%';PB.raf=requestAnimationFrame(tick)};tick();
+}
+function showReact(d){const e=String(d.e||'').slice(0,4);if(!e)return;const el=document.createElement('div');el.className='fl';el.style.left=(8+Math.random()*80)+'%';
+  el.innerHTML=`<b>${esc(e)}</b>${d.name?`<small style="color:${esc(d.color||'#fff')}">${esc(String(d.name).slice(0,16))}</small>`:''}`;$('#floats').append(el);setTimeout(()=>el.remove(),2700)}
+function sendReact(e){const me=NET.players.find(p=>p.id===NET.myId);const d={type:'react',e,name:NET.active?myName():'',color:me&&me.color};showReact(d);NET.send(d)}
+$('#reacts').addEventListener('click',ev=>{const b=ev.target.closest('button');if(b)sendReact(b.dataset.e)});
+function bigCountdown(n){const el=$('#bigCount');el.hidden=false;let k=n;const draw=()=>{el.innerHTML=`<div><span>🎉 Todos gravaram! A dobragem começa em</span><b>${k}</b></div>`};draw();
+  const iv=setInterval(()=>{k--;if(k<=0){clearInterval(iv);el.innerHTML='<div><b>🎬</b></div>';setTimeout(()=>{if(S.busy!=='watch')el.hidden=true},2500)}else draw()},1000)}
+async function watchSolo(){stopAll(true);loading('A preparar a dobragem…');const plan=await buildPlan();loading();runWatch(plan)}
+
+/* ===== settings popover ===== */
+$('#setBtn').onclick=e=>{e.stopPropagation();$('#pop').hidden=!$('#pop').hidden;if(!$('#pop').hidden)listMics()};
+document.addEventListener('click',e=>{if(!$('#pop').hidden&&!e.target.closest('#pop'))$('#pop').hidden=true});
+$('#exportBtn').onclick=async()=>{
+  if(!S.pack)return;loading('A misturar a dobragem…');
+  try{const plan=await buildPlan(),sr=44100,c=new OfflineAudioContext(2,Math.ceil((S.pack.duration+0.5)*sr),sr);
+    const add=(buf,at,end)=>{const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();s.connect(g);g.connect(c.destination);let off=0;if(at<0){off=-at;at=0}s.start(at,off);if(end!=null){g.gain.setValueAtTime(1,Math.max(at,end-0.05));g.gain.linearRampToValueAtTime(0,end);s.stop(end+0.01)}};
+    if(S.pack.backing)add(S.pack.backing,0,null);for(const it of plan)add(it.buf,it.at,it.end);
+    const a=document.createElement('a');a.href=URL.createObjectURL(encodeWav(await c.startRendering()));a.download=S.pack.title+' - dobragem.wav';a.click();
+  }catch(e){toast('Erro ao exportar: '+e.message)}loading()};
+function encodeWav(b){const ch=b.numberOfChannels,len=b.length,sr=b.sampleRate,buf=new ArrayBuffer(44+len*ch*2),v=new DataView(buf),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+len*ch*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,len*ch*2,true);const d=[];for(let c=0;c<ch;c++)d.push(b.getChannelData(c));let o=44;for(let i=0;i<len;i++)for(let c=0;c<ch;c++){v.setInt16(o,clamp(d[c][i],-1,1)*32767,true);o+=2}return new Blob([buf],{type:'audio/wav'})}
+$('#clearBtn').onclick=async()=>{if(!S.pack)return;const mine=Object.values(S.takes).filter(t=>{const l=S.pack.lines.find(l=>l.id===t.lineId);return l&&canRecord(l)&&(!NET.active||t.by===NET.myId)});if(!mine.length)return toast('Não tens gravações neste pacote');if(!confirm(`Apagar ${mine.length} gravações tuas deste pacote?`))return;for(const t of mine){await removeTake(t.lineId);NET.sendTakeDel(t.lineId)}renderAll()};
+
+/* ===== packs ===== */
+async function refreshPacks(){try{S.packs=(await DB.all('packs')).map(p=>({id:p.id,title:p.title,lines:p.lines,iconUrl:p.icon?URL.createObjectURL(p.icon):'',added:p.added})).sort((a,b)=>a.added-b.added)}catch{S.packs=[]}renderShelf()}
+function renderShelf(){
+  const locked=NET.active&&!NET.host;
+  $('#shelf').innerHTML=S.packs.map(p=>`<div class="tape ${S.pack&&S.pack.id===p.id?'on':''}" data-id="${esc(p.id)}" title="${p.lines} falas"><div class="box" style="background-image:url('${p.iconUrl}')"><span class="nm">${esc(p.title)}</span>${locked?'':'<button class="x" title="Remover">✕</button>'}</div></div>`).join('')+(locked?'':`<div class="tape up" id="upTape"><div class="box"><div><b>+</b>Carregar zip</div></div></div>`);
+}
+$('#packBtn').onclick=()=>{if(NET.active&&!NET.host)return toast('Na sala, é o anfitrião que escolhe o pacote');$('#shelf').hidden=!$('#shelf').hidden};
+$('#shelf').addEventListener('click',async e=>{
+  if(e.target.closest('#upTape'))return $('#fileIn').click();
+  const t=e.target.closest('.tape');if(!t)return;const id=t.dataset.id;
+  if(e.target.classList.contains('x')){if(!confirm('Remover este pacote e as gravações dele?'))return;await DB.del('packs',id);try{for(const tk of await DB.all('takes'))if(tk.pack===id)await DB.del('takes',tk.k)}catch{}if(S.pack&&S.pack.id===id){stopAll(true);S.pack=null}await refreshPacks();renderAll();return}
+  if(S.pack&&S.pack.id===id){$('#shelf').hidden=true;return}
+  const rec=await DB.get('packs',id);if(rec){$('#shelf').hidden=true;await openPack(rec.blob,rec.id)}
+});
+$('#fileIn').onchange=async e=>{const fs=[...e.target.files];e.target.value='';let last=null;for(const f of fs){try{loading('A importar '+f.name);last=await importBlob(f)}catch(err){toast('Erro: '+err.message,5000)}}loading();if(last){$('#shelf').hidden=true;await openPack(last)}};
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',async e=>{e.preventDefault();if(NET.active&&!NET.host)return;const f=[...e.dataTransfer.files].find(f=>/\.(zip|rar|7z)$/i.test(f.name));if(!f)return;try{loading('A importar '+f.name);const b=await importBlob(f);loading();await openPack(b)}catch(err){loading();toast('Erro: '+err.message,5000)}});
+// .rar / .7z -> unpack in the browser (7-Zip compiled to WebAssembly) and repack as .zip
+let SZ=null;
+async function sevenZip(){if(!SZ){const m=await import('https://cdn.jsdelivr.net/npm/7z-wasm@1.2.0/7zz.es6.js');SZ=m.default}return SZ({print:()=>{},printErr:()=>{}})}
+async function sniffArchive(blob){const h=new Uint8Array(await blob.slice(0,8).arrayBuffer());
+  if(h[0]===0x50&&h[1]===0x4b)return'zip';if(h[0]===0x52&&h[1]===0x61&&h[2]===0x72&&h[3]===0x21)return'rar';if(h[0]===0x37&&h[1]===0x7a&&h[2]===0xbc&&h[3]===0xaf)return'7z';return'?'}
+async function toZip(blob){
+  const kind=await sniffArchive(blob);if(kind==='zip'||kind==='?')return blob;
+  loading('A abrir o '+kind+'… (só da primeira vez demora um pouco)');
+  let sz;try{sz=await sevenZip()}catch(e){throw new Error('Para abrir .'+kind+' preciso de internet (leitor 7-Zip).')}
+  const name='in.'+kind;sz.FS.writeFile(name,new Uint8Array(await blob.arrayBuffer()));sz.FS.mkdir('/out');
+  sz.callMain(['x',name,'-o/out','-y','-bd']);
+  const zip=new JSZip();let n=0;
+  const walk=d=>{for(const f of sz.FS.readdir(d)){if(f==='.'||f==='..')continue;const p=d+'/'+f,st=sz.FS.stat(p);if(sz.FS.isDir(st.mode))walk(p);else{zip.file(p.slice(5),sz.FS.readFile(p));n++}}};
+  walk('/out');if(!n)throw new Error('Não consegui extrair este .'+kind+' (tem palavra-passe ou está danificado?)');
+  loading('A preparar o pacote…');return zip.generateAsync({type:'blob',compression:'STORE'});
+}
+async function importBlob(blob,forceId){blob=await toZip(blob);const m=await packMeta(blob);if(!m.lines)throw new Error('Este zip não parece um pacote de dobragem');const b=blob instanceof File?new Blob([blob]):blob;const id=forceId||m.title+'::'+blob.size;await DB.put('packs',{id,title:m.title,lines:m.lines,size:blob.size,icon:m.icon,blob:b,added:Date.now()});await refreshPacks();b._id=id;return b}
+/* ===== video optimisation: once per pack, in the background =====
+   .ogv (Theora) only plays through ogv.js: slow jumps between lines, lower quality.
+   ffmpeg (WebAssembly, in a worker) converts it once to H.264 with a keyframe every 0.5 s,
+   which the browser plays natively: instant, frame-exact jumps. The stored pack is updated,
+   so this only happens once, and friends in a room receive the converted pack. */
+const FF_CORE='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js';
+const OPT={busy:null,worker:null};
+function ffWorker(){
+  if(OPT.worker)return OPT.worker;
+  const src=`import f from '${FF_CORE}';let core;
+self.onmessage=async e=>{const {input,args,out}=e.data;
+  try{if(!core){core=await f({});core.setProgress(p=>self.postMessage({prog:p.progress}))}
+  core.FS.writeFile('in',input);const rc=core.exec(...args);let data=null;try{data=core.FS.readFile(out);core.FS.unlink(out)}catch(err){}
+  try{core.FS.unlink('in')}catch(err){}core.reset();self.postMessage({done:true,rc,data},data?[data.buffer]:[])}
+  catch(err){self.postMessage({done:true,rc:-1,err:String(err)})}}`;
+  OPT.worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})),{type:'module'});return OPT.worker;
+}
+function ffRun(input,args,out,onProg){return new Promise((res,rej)=>{const w=ffWorker();
+  w.onmessage=e=>{const d=e.data;if(d.prog!=null){onProg&&onProg(d.prog);return}if(d.done){if(d.data&&d.data.length>1000)res(d.data);else rej(new Error(d.err||'conversão falhou ('+d.rc+')'))}};
+  w.onerror=e=>rej(new Error(e.message||'worker'));w.postMessage({input,args,out},[input.buffer])})}
+function optPill(txt){const el=$('#optPill');el.hidden=!txt;if(txt)el.textContent=txt}
+async function optimizeVideo(id){
+  if(OPT.busy||!window.Worker)return;OPT.busy=id;
+  try{
+    const rec=await DB.get('packs',id);if(!rec)return;
+    const zip=await JSZip.loadAsync(rec.blob),names=Object.keys(zip.files);
+    const vName=names.find(n=>/(^|\/)dub_video\.(ogv|ogg|mov)$/i.test(n));if(!vName)return;
+    const h264=natVid.canPlayType('video/mp4; codecs="avc1.640028"');
+    const hasBacking=names.some(n=>/(^|\/)_backing_track\.\w+$/i.test(n));
+    const input=await zip.file(vName).async('uint8array');
+    const outName=h264?'out.mp4':'out.webm';
+    const vArgs=h264?['-c:v','libx264','-preset','ultrafast','-crf','23','-g','15','-keyint_min','15','-pix_fmt','yuv420p','-movflags','+faststart']
+                    :['-c:v','libvpx','-deadline','realtime','-cpu-used','8','-b:v','3M','-g','15','-auto-alt-ref','0'];
+    const aArgs=hasBacking?['-an']:(h264?['-c:a','aac','-b:a','160k']:['-c:a','libopus','-b:a','128k']);
+    optPill('⚡ A otimizar o vídeo… 0%');
+    const out=await ffRun(input,['-i','in','-vf',"scale=-2:'min(720,ih)'",...vArgs,...aArgs,outName],outName,p=>optPill('⚡ A otimizar o vídeo… '+Math.round(clamp(p,0,1)*100)+'%'));
+    const type=h264?'video/mp4':'video/webm';
+    // make sure the browser really plays it before replacing anything
+    const url=URL.createObjectURL(new Blob([out],{type}));
+    const test=document.createElement('video');test.muted=true;test.preload='auto';test.src=url;
+    const ok=await Promise.race([new Promise(r=>{test.oncanplay=()=>r(true);test.onerror=()=>r(false)}),sleep(15000).then(()=>false)]);
+    test.removeAttribute('src');test.load();
+    if(!ok){URL.revokeObjectURL(url);throw new Error('o browser não abriu o vídeo convertido')}
+    zip.remove(vName);zip.file(vName.replace(/[^/]+$/,'dub_video.'+(h264?'mp4':'webm')),out);
+    const blob=await zip.generateAsync({type:'blob',compression:'STORE'});
+    const fresh=await DB.get('packs',id);if(fresh){fresh.blob=blob;fresh.size=blob.size;await DB.put('packs',fresh)}
+    // swap the player as soon as nothing is playing
+    while(S.pack&&S.pack.id===id&&S.busy)await sleep(500);
+    if(S.pack&&S.pack.id===id){
+      S.blob=blob;S.pack.urls.push(url);S.pack.videoUrl=url;S.pack.videoType=type;
+      await prepareVideo(url,type);renderLine();
+      toast('⚡ Vídeo otimizado: agora trocar de fala é instantâneo',4000);
+    }else URL.revokeObjectURL(url);
+  }catch(e){console.warn('optimize',e)}
+  finally{OPT.busy=null;optPill('')}
+}
+async function openPack(blob,forceId){forceId=forceId||blob._id;
+  stopAll(true);
+  try{loading('A abrir pacote…');
+    const p=await readPack(blob,m=>loading(m));if(forceId)p.id=forceId;
+    if(S.pack)S.pack.urls.forEach(u=>u&&URL.revokeObjectURL(u));
+    S.pack=p;S.idx=0;S.blob=blob;
+    S.myChars=new Set(JSON.parse(LS.get('dubparty-chars:'+p.id,'[]')).filter(c=>p.chars.some(x=>x.name===c)));
+    if(NET.active&&!NET.host)S.takes={};else await loadTakesFromDB();
+    loading('A carregar o vídeo todo antes de jogar…');await prepareVideo(p.videoUrl,p.videoType);
+    if(p.videoUrl&&(vid!==natVid||!videoOk))setTimeout(()=>optimizeVideo(p.id),500);
+    LS.set('dubparty-lastpack',p.id);
+    if(NET.active&&NET.host)NET.offerPack();
+  }catch(e){console.error(e);toast('Não consegui abrir: '+e.message,5000)}
+  loading();renderAll();
+}
+
+/* ===== characters ===== */
+function renderChars(){
+  const g=$('#charsG');if(!S.pack){g.innerHTML='<span class="st">Carrega um pacote</span>';return}
+  g.innerHTML=S.pack.chars.map(c=>{const o=ownerOf(c.name),mine=NET.active?o===NET.myId:o==='me',taken=o&&!mine;
+    return`<div class="chr"><span class="av" style="background-image:url('${c.img}');border-color:${c.color}"></span><span class="nm" style="color:${c.color}">${esc(c.name)}<small>${c.count} falas${taken?' · '+esc(playerName(o)):''}</small></span><button data-c="${esc(c.name)}" class="${mine?'mine':''}" ${taken?'disabled':''}>${mine?'✓ Tua':taken?'Ocupada':'Escolher'}</button></div>`}).join('');
+}
+$('#charsG').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(!b)return;const c=b.dataset.c;
+  if(NET.active)NET.claim(c,NET.cast[c]!==NET.myId);
+  else{S.myChars.has(c)?S.myChars.delete(c):S.myChars.add(c);LS.set('dubparty-chars:'+S.pack.id,JSON.stringify([...S.myChars]));renderAll()}});
+$('#helpBtn').onclick=()=>$('#helpM').classList.add('on');
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m||e.target.hasAttribute('data-close'))m.classList.remove('on')}));
+
+/* ===== multiplayer (PeerJS) ===== */
+const myName=()=>($('#nameIn')&&$('#nameIn').value.trim())||LS.get('dubparty-name','')||'Jogador';
+function playerName(id){const p=NET.players.find(p=>p.id===id);return p?p.name:'alguém'}
+const NET={
+  active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},status:'',recv:null,pfx:'dubparty-v2-',
+  bcast(msg,except){for(const [id,c] of this.conns)if(id!==except&&c.open)try{c.send(msg)}catch(e){console.warn(e)}},
+  toHost(msg){if(this.conn&&this.conn.open)this.conn.send(msg)},
+  send(msg){if(!this.active)return;if(this.host)this.bcast(msg);else this.toHost(msg)},
+  state(){return{type:'state',players:this.players,cast:this.cast}},
+  pushState(){if(this.host){this.bcast(this.state());renderAll()}},
+  sendTake(t){this.send({type:'take',take:serialTake(t)})},
+  sendTakeMeta(t){this.send({type:'meta',lineId:t.lineId,effect:t.effect,params:t.params,offset:t.offset,v:t.v})},
+  sendTakeDel(id){this.send({type:'del',lineId:id})},
+  claim(c,on){if(this.host)this.applyClaim(this.myId,c,on);else this.toHost({type:'claim',char:c,on})},
+  applyClaim(pid,c,on){if(on){if(!this.cast[c])this.cast[c]=pid}else if(this.cast[c]===pid)delete this.cast[c];this.pushState()},
+  setStatus(s){this.status=s;const el=$('#mpStatus');if(el)el.textContent=s},
+  async create(){
+    if(!window.Peer)return toast('Sem internet para o modo multijogador');
+    this.leave(true);this.setStatus('A criar sala…');
+    const tryOpen=()=>new Promise((res,rej)=>{const code=Array.from({length:5},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');const p=new Peer(this.pfx+code,{debug:1});p.on('open',()=>res({p,code}));p.on('error',e=>{p.destroy();rej(e)})});
+    let r;for(let i=0;i<4;i++){try{r=await tryOpen();break}catch(e){if(e.type!=='unavailable-id'){this.setStatus('Erro: '+(e.type||e.message));return}}}
+    if(!r)return;
+    Object.assign(this,{active:true,host:true,peer:r.p,code:r.code,myId:r.p.id,players:[{id:r.p.id,name:myName(),color:COLORS[0],host:true}]});
+    // keep the characters the host already picked solo
+    this.cast={};for(const c of S.myChars)this.cast[c]=r.p.id;
+    r.p.on('error',e=>console.warn('peer',e));
+    r.p.on('disconnected',()=>{try{r.p.reconnect()}catch{}});
+    r.p.on('connection',conn=>{conn.on('open',()=>this.conns.set(conn.peer,conn));conn.on('data',d=>this.onHost(conn,d));conn.on('close',()=>this.dropPeer(conn.peer));conn.on('error',()=>this.dropPeer(conn.peer))});
+    this.setStatus('Envia o código aos teus amigos');
+    this.hb=setInterval(()=>{const now=Date.now();this.bcast({type:'ping'});for(const p of this.players)if(!p.host&&p.seen&&now-p.seen>15000)this.dropPeer(p.id)},4000);
+    renderAll();
+  },
+  dropPeer(id){if(!this.conns.has(id)&&!this.players.some(p=>p.id===id))return;const c=this.conns.get(id);this.conns.delete(id);try{c&&c.close()}catch{}const p=this.players.find(p=>p.id===id);this.players=this.players.filter(p=>p.id!==id);for(const k in this.cast)if(this.cast[k]===id)delete this.cast[k];if(p)toast(p.name+' saiu da sala');this.pushState()},
+  async onHost(conn,d){
+    const pl=this.players.find(p=>p.id===conn.peer);if(pl)pl.seen=Date.now();
+    switch(d.type){
+      case'hello':this.conns.set(conn.peer,conn);if(!pl)this.players.push({id:conn.peer,name:String(d.name||'Jogador').slice(0,24),color:COLORS[this.players.length%COLORS.length],seen:Date.now()});conn.send({type:'welcome',you:conn.peer});this.pushState();toast(String(d.name||'Alguém')+' entrou na sala');if(S.pack)this.offerPack(conn);break;
+      case'claim':this.applyClaim(conn.peer,d.char,d.on);break;
+      case'needPack':this.streamPack(conn);break;
+      case'haveTakes':for(const t of Object.values(S.takes))conn.send({type:'take',take:serialTake(t)});break;
+      case'take':if(this.cast[d.take.char]!==conn.peer)return;await this.applyTake(d.take);this.bcast(d,conn.peer);break;
+      case'meta':{const l=S.pack&&S.pack.lines.find(l=>l.id===d.lineId);if(!l||this.cast[l.char]!==conn.peer)return;this.applyMeta(d);this.bcast(d,conn.peer);break}
+      case'del':{const l=S.pack&&S.pack.lines.find(l=>l.id===d.lineId);if(!l||this.cast[l.char]!==conn.peer)return;await removeTake(d.lineId);this.bcast(d,conn.peer);renderAll();break}
+      case'watchReq':this.startWatchAll();break;
+      case'react':showReact(d);this.bcast(d,conn.peer);break;
+      case'watchStop':if(S.busy==='watch')stopAll();this.bcast({type:'watchStop'},conn.peer);break;
+    }
+  },
+  offerPack(conn){const m={type:'pack',id:S.pack.id,title:S.pack.title};if(conn)conn.send(m);else{this.bcast(m);this.cast={};this.pushState()}},
+  async streamPack(conn){const buf=await S.blob.arrayBuffer(),CH=192*1024,n=Math.ceil(buf.byteLength/CH);for(let i=0;i<n;i++){if(!conn.open)return;while(conn.dataChannel&&conn.dataChannel.bufferedAmount>4194304||(conn.bufferSize||0)>20)await sleep(40);conn.send({type:'chunk',i,n,data:buf.slice(i*CH,(i+1)*CH)});if(i%8===0)await sleep(0)}},
+  async applyTake(t){t=Object.assign({},t);t.pcm=toAB(t.pcm);if(!S.pack||!S.pack.lines.some(l=>l.id===t.lineId))return;await storeTake(t);renderAll()},
+  applyMeta(d){const t=S.takes[d.lineId];if(!t)return;Object.assign(t,{effect:d.effect,params:d.params,offset:d.offset,v:d.v});storeTake(t);renderAll()},
+  // everyone in the room with a character has recorded all their lines?
+  progress(p){const L=S.pack?S.pack.lines:[];const my=L.filter(l=>this.cast[l.char]===p.id);return{my,done:my.filter(l=>S.takes[l.id]).length}},
+  roomDone(){const ps=this.players.filter(p=>this.progress(p).my.length);return this.players.length>=2&&ps.length>=2&&ps.every(p=>{const r=this.progress(p);return r.done===r.my.length})},
+  checkDone(){
+    if(!this.active||!this.host||!S.pack||S.busy||this.doneTimer)return;
+    if(!this.roomDone()){this.doneSig='';return}
+    const sig=Object.values(S.takes).map(t=>t.lineId+t.v).sort().join();if(sig===this.doneSig)return;this.doneSig=sig;
+    this.bcast({type:'allDone'});bigCountdown(3);
+    this.doneTimer=setTimeout(()=>{this.doneTimer=null;this.startWatchAll()},3000);
+  },
+  async startWatchAll(){if(!S.pack)return;const delay=1800;this.bcast({type:'watch',delay});loading('A preparar a dobragem…');const plan=await buildPlan();await sleep(Math.max(0,delay-50));loading();runWatch(plan)},
+  join(code){
+    code=String(code||'').trim().toUpperCase();if(code.length<4)return toast('Escreve o código da sala');
+    if(!window.Peer)return toast('Sem internet para o modo multijogador');
+    this.leave(true);this.setStatus('A entrar na sala '+code+'…');
+    const p=new Peer({debug:1});this.peer=p;
+    p.on('error',e=>{if(e.type==='peer-unavailable'){this.leave(true);this.setStatus('Sala '+code+' não encontrada');renderMP()}else this.setStatus('Erro: '+(e.type||e.message))});
+    p.on('open',()=>{const c=p.connect(this.pfx+code,{reliable:true,serialization:'binary'});this.conn=c;
+      c.on('open',()=>{Object.assign(this,{active:true,host:false,code,myId:p.id});c.send({type:'hello',name:myName()});this.setStatus('');renderAll()});
+      c.on('data',d=>this.onGuest(d));
+      c.on('close',()=>{if(this.active){toast('A sala fechou ou perdeste a ligação',4000);this.leave(true);renderAll()}})});
+  },
+  async onGuest(d){
+    switch(d.type){
+      case'welcome':this.myId=d.you;break;
+      case'ping':this.toHost({type:'pong'});break;
+      case'state':this.players=d.players;this.cast=d.cast;renderAll();break;
+      case'pack':{if(S.pack&&S.pack.id===d.id){S.takes={};this.toHost({type:'haveTakes'});renderAll();break}
+        const rec=await DB.get('packs',d.id);if(rec){await openPack(rec.blob,rec.id);this.toHost({type:'haveTakes'})}else{this.recv={parts:[],got:0,id:d.id};this.setStatus('A receber “'+d.title+'”…');this.toHost({type:'needPack'})}break}
+      case'chunk':{const r=this.recv;if(!r||r.parts[d.i])break;r.parts[d.i]=toAB(d.data);r.got++;this.setStatus(`A receber o pacote… ${Math.round(r.got/d.n*100)}%`);if(r.got===d.n){this.recv=null;this.setStatus('');const blob=new Blob(r.parts,{type:'application/zip'});let b=blob;try{b=await importBlob(blob,r.id)}catch(e){console.warn(e)}await openPack(b,r.id);this.toHost({type:'haveTakes'})}break}
+      case'take':await this.applyTake(d.take);break;
+      case'meta':this.applyMeta(d);break;
+      case'del':await removeTake(d.lineId);renderAll();break;
+      case'watch':{loading('A preparar a dobragem…');const plan=await buildPlan();await sleep(Math.max(0,d.delay-200));loading();runWatch(plan);break}
+      case'watchStop':if(S.busy==='watch')stopAll();break;
+      case'react':showReact(d);break;
+      case'allDone':bigCountdown(3);break;
+    }
+  },
+  leave(quiet){const was=this.active;clearTimeout(this.doneTimer);this.doneTimer=null;this.doneSig='';$('#bigCount').hidden=true;const nm=$('#nameIn');if(nm&&nm.value.trim())LS.set('dubparty-name',nm.value.trim());clearInterval(this.hb);try{this.conn&&this.conn.close()}catch{}for(const c of this.conns.values())try{c.close()}catch{}try{this.peer&&this.peer.destroy()}catch{}Object.assign(this,{active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},recv:null});if(!quiet)this.setStatus('');if(was&&S.pack)loadTakesFromDB().then(renderAll)}
+};
+function renderMP(){
+  const el=$('#mp');
+  if(!NET.active){
+    el.innerHTML=`<h3>Jogar com amigos</h3>
+      <input id="nameIn" maxlength="24" placeholder="O teu nome" value="${esc(LS.get('dubparty-name',''))}">
+      <button class="b main" id="createBtn" style="width:100%;justify-content:center;margin-top:8px">Criar sala</button>
+      <div class="row"><input id="codeIn" maxlength="6" placeholder="Código" style="text-transform:uppercase;letter-spacing:.15em"><button class="b" id="joinBtn">Entrar</button></div>
+      <div class="st" id="mpStatus">${esc(NET.status)}</div>`;
+    $('#nameIn').oninput=e=>LS.set('dubparty-name',e.target.value.trim());
+    $('#createBtn').onclick=()=>{if(!S.pack)return toast('Primeiro escolhe um pacote');NET.create()};
+    $('#joinBtn').onclick=()=>NET.join($('#codeIn').value);
+    $('#codeIn').onkeydown=e=>{if(e.key==='Enter')NET.join(e.target.value)};
+    return;
+  }
+  const lines=S.pack?S.pack.lines:[];
+  el.innerHTML=`<h3>Sala <small>${NET.players.length} ${NET.players.length===1?'jogador':'jogadores'}</small></h3>
+    <div class="code" id="codeBox" title="Clica para copiar">${esc(NET.code)}</div>
+    <ul class="players">${NET.players.map(p=>{const ch=Object.keys(NET.cast).filter(c=>NET.cast[c]===p.id),my=lines.filter(l=>ch.includes(l.char)),done=my.filter(l=>S.takes[l.id]).length;return`<li><i style="background:${p.color}"></i><span>${esc(p.name)}${p.id===NET.myId?' (tu)':''}${p.host?' 👑':''}</span><small class="${my.length&&done===my.length?'ok':''}">${ch.length?esc(ch.join(', '))+(my.length&&done===my.length?' ✓ pronto':` ${done}/${my.length}`):'—'}</small></li>`}).join('')}</ul>
+    <div class="st">${NET.roomDone()?'Todos prontos! 🎬':'Quando todos acabarem as suas falas, a dobragem começa sozinha para todos.'}</div>
+    <div class="row"><button class="lnk" id="leaveBtn">Sair da sala</button></div>
+    <div class="st" id="mpStatus">${esc(NET.status)}</div>`;
+  $('#codeBox').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(NET.code).then(()=>toast('Código copiado'))};
+  $('#leaveBtn').onclick=()=>{if(confirm(NET.host?'Fechar a sala para todos?':'Sair da sala?')){NET.leave();renderAll()}};
+}
+
+/* ===== controls ===== */
+$('#listenBtn').onclick=()=>play('listen');
+$('#recBtn').onclick=()=>{if(S.busy==='record')finishRecord(cur());else play('record')};
+$('#playTakeBtn').onclick=()=>play('take');
+$('#prevBtn').onclick=()=>step(-1);$('#nextBtn').onclick=()=>step(1);$('#nextMineBtn').onclick=nextMine;
+$('#watchBtn').onclick=()=>{if(S.busy==='watch'){stopAll();NET.send({type:'watchStop'});return}if(NET.active){if(NET.host)NET.startWatchAll();else NET.toHost({type:'watchReq'})}else watchSolo()};
+document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||e.ctrlKey||e.metaKey||e.altKey||!S.pack)return;
+  if(S.busy==='watch'&&/^[1-5]$/.test(e.key)){sendReact(['😂','🔥','💀','👏','😭'][+e.key-1]);return}
+  if(e.code==='Space'){e.preventDefault();S.busy==='watch'?stopAll():play('listen')}
+  else if(e.key==='r'||e.key==='R'){e.preventDefault();$('#recBtn').click()}
+  else if(e.key==='p'||e.key==='P')play('take');
+  else if(e.key==='n'||e.key==='N')nextMine();
+  else if(e.key==='ArrowRight'){e.preventDefault();step(1)}else if(e.key==='ArrowLeft'){e.preventDefault();step(-1)}
+  else if(e.key==='Escape')stopAll()});
+window.addEventListener('beforeunload',e=>{if(NET.active&&NET.host){e.preventDefault();e.returnValue=''}});
+
+/* ===== init ===== */
+(async()=>{
+  renderAll();await refreshPacks();
+  const last=LS.get('dubparty-lastpack','');const rec=last&&await DB.get('packs',last).catch(()=>null);
+  if(rec)await openPack(rec.blob,rec.id);else{$('#shelf').hidden=false;if(!S.packs.length)$('#helpM').classList.add('on')}
+})();
+</script>
+<script>
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installBtn').hidden=false});
+window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Dub Party instalado 🎉')});
+$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$('#installBtn').hidden=true};
+// installed app: open .zip/.rar/.7z files straight from the file explorer
+if('launchQueue' in window)launchQueue.setConsumer(async p=>{if(!p.files||!p.files.length)return;let last=null;
+  for(const h of p.files){try{const f=await h.getFile();loading('A importar '+f.name);last=await importBlob(f)}catch(err){toast('Erro: '+err.message,5000)}}
+  loading();if(last){$('#shelf').hidden=true;await openPack(last)}});
+</script>
+</body>
+</html>
