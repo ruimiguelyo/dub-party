@@ -308,7 +308,7 @@ const EN={
 'A criar sala…':'Creating room…','Envia o código aos teus amigos':'Send the code to your friends','Escreve o código da sala':'Type the room code',
 'A sala fechou ou perdeste a ligação':'The room closed or you lost connection','Primeiro escolhe um pacote':'Choose a pack first','Código copiado':'Code copied',
 'Fechar a sala para todos?':'Close the room for everyone?','Sair da sala?':'Leave the room?','Dub Party instalado 🎉':'Dub Party installed 🎉',
-'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language'
+'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language','Ligação perdida, a voltar a ligar…':'Connection lost, reconnecting…','A receber o pacote…':'Receiving the pack…'
 };
 const tr1=s=>EN[s]!=null?EN[s]:s;
 const RULES=[
@@ -949,7 +949,7 @@ document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if
 const myName=()=>($('#nameIn')&&$('#nameIn').value.trim())||LS.get('dubparty-name','')||'Jogador';
 function playerName(id){const p=NET.players.find(p=>p.id===id);return p?p.name:'alguém'}
 const NET={
-  active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},status:'',recv:null,pfx:'dubparty-v2-',
+  active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},status:'',recv:null,streaming:new Set(),tries:0,pfx:'dubparty-v2-',
   bcast(msg,except){for(const [id,c] of this.conns)if(id!==except&&c.open)try{c.send(msg)}catch(e){console.warn(e)}},
   toHost(msg){if(this.conn&&this.conn.open)this.conn.send(msg)},
   send(msg){if(!this.active)return;if(this.host)this.bcast(msg);else this.toHost(msg)},
@@ -972,18 +972,18 @@ const NET={
     this.cast={};for(const c of S.myChars)this.cast[c]=r.p.id;
     r.p.on('error',e=>console.warn('peer',e));
     r.p.on('disconnected',()=>{try{r.p.reconnect()}catch{}});
-    r.p.on('connection',conn=>{conn.on('open',()=>this.conns.set(conn.peer,conn));conn.on('data',d=>this.onHost(conn,d));conn.on('close',()=>this.dropPeer(conn.peer));conn.on('error',()=>this.dropPeer(conn.peer))});
+    r.p.on('connection',conn=>{conn.on('open',()=>this.conns.set(conn.peer,conn));conn.on('data',d=>this.onHost(conn,d));const gone=()=>{if(this.conns.get(conn.peer)===conn)this.dropPeer(conn.peer)};conn.on('close',gone);conn.on('error',gone)});
     this.setStatus('Envia o código aos teus amigos');
-    this.hb=setInterval(()=>{const now=Date.now();this.bcast({type:'ping'});for(const p of this.players)if(!p.host&&p.seen&&now-p.seen>15000)this.dropPeer(p.id)},4000);
+    this.hb=setInterval(()=>{const now=Date.now();this.bcast({type:'ping'});for(const p of this.players)if(!p.host&&p.seen&&!this.streaming.has(p.id)&&now-p.seen>30000)this.dropPeer(p.id)},4000);
     renderAll();
   },
   dropPeer(id){if(!this.conns.has(id)&&!this.players.some(p=>p.id===id))return;const c=this.conns.get(id);this.conns.delete(id);try{c&&c.close()}catch{}const p=this.players.find(p=>p.id===id);this.players=this.players.filter(p=>p.id!==id);for(const k in this.cast)if(this.cast[k]===id)delete this.cast[k];if(p)toast(p.name+' saiu da sala');this.pushState()},
   async onHost(conn,d){
     const pl=this.players.find(p=>p.id===conn.peer);if(pl)pl.seen=Date.now();
     switch(d.type){
-      case'hello':this.conns.set(conn.peer,conn);if(!pl)this.players.push({id:conn.peer,name:String(d.name||'Jogador').slice(0,24),color:COLORS[this.players.length%COLORS.length],seen:Date.now()});conn.send({type:'welcome',you:conn.peer});this.pushState();toast(String(d.name||'Alguém')+' entrou na sala');if(S.pack)this.offerPack(conn);break;
+      case'hello':{const old=this.conns.get(conn.peer);this.conns.set(conn.peer,conn);if(old&&old!==conn)try{old.close()}catch{}if(!pl)this.players.push({id:conn.peer,name:String(d.name||'Jogador').slice(0,24),color:COLORS[this.players.length%COLORS.length],seen:Date.now()});conn.send({type:'welcome',you:conn.peer});this.pushState();if(!pl)toast(String(d.name||'Alguém')+' entrou na sala');}if(S.pack)this.offerPack(conn);break;
       case'claim':this.applyClaim(conn.peer,d.char,d.on);break;
-      case'needPack':this.streamPack(conn);break;
+      case'needPack':this.streamPack(conn,d.have);break;
       case'haveTakes':for(const t of Object.values(S.takes))conn.send({type:'take',take:serialTake(t)});break;
       case'take':if(this.cast[d.take.char]!==conn.peer)return;await this.applyTake(d.take);this.bcast(d,conn.peer);break;
       case'meta':{const l=S.pack&&S.pack.lines.find(l=>l.id===d.lineId);if(!l||this.cast[l.char]!==conn.peer)return;this.applyMeta(d);this.bcast(d,conn.peer);break}
@@ -994,7 +994,8 @@ const NET={
     }
   },
   offerPack(conn){const m={type:'pack',id:S.pack.id,title:S.pack.title};if(conn)conn.send(m);else{this.bcast(m);this.cast={};this.pushState()}},
-  async streamPack(conn){const buf=await S.blob.arrayBuffer(),CH=192*1024,n=Math.ceil(buf.byteLength/CH);for(let i=0;i<n;i++){if(!conn.open)return;while(conn.dataChannel&&conn.dataChannel.bufferedAmount>4194304||(conn.bufferSize||0)>20)await sleep(40);conn.send({type:'chunk',i,n,data:buf.slice(i*CH,(i+1)*CH)});if(i%8===0)await sleep(0)}},
+  async streamPack(conn,have){const id=conn.peer,buf=await S.blob.arrayBuffer(),CH=64*1024,n=Math.ceil(buf.byteLength/CH),skip=new Set(Array.isArray(have)?have:[]);this.streaming.add(id);
+    try{for(let i=0;i<n;i++){if(skip.has(i))continue;if(!conn.open||this.conns.get(id)!==conn)return;while(conn.open&&(conn.dataChannel&&conn.dataChannel.bufferedAmount>262144||(conn.bufferSize||0)>4))await sleep(25);const pl=this.players.find(p=>p.id===id);if(pl)pl.seen=Date.now();conn.send({type:'chunk',i,n,data:buf.slice(i*CH,(i+1)*CH)});if(i%16===0)await sleep(0)}}finally{if(this.conns.get(id)===conn||!this.conns.has(id))this.streaming.delete(id)}},
   async applyTake(t){t=Object.assign({},t);t.pcm=toAB(t.pcm);if(!S.pack||!S.pack.lines.some(l=>l.id===t.lineId))return;await storeTake(t);renderAll()},
   applyMeta(d){const t=S.takes[d.lineId];if(!t)return;Object.assign(t,{effect:d.effect,params:d.params,offset:d.offset,v:d.v});storeTake(t);renderAll()},
   // everyone in the room with a character has recorded all their lines?
@@ -1012,19 +1013,28 @@ const NET={
     code=String(code||'').trim().toUpperCase();if(code.length<4)return toast('Escreve o código da sala');
     if(!window.Peer)return toast('Sem internet para o modo multijogador');
     this.leave(true);this.setStatus('A entrar na sala '+code+'…');
-    const p=new Peer({debug:1});this.peer=p;
-    p.on('error',e=>{if(e.type==='peer-unavailable'){this.leave(true);this.setStatus('Sala '+code+' não encontrada');renderMP()}else this.setStatus('Erro: '+(e.type||e.message))});
-    p.on('open',()=>{const c=p.connect(this.pfx+code,{reliable:true,serialization:'binary'});this.conn=c;
-      c.on('open',()=>{Object.assign(this,{active:true,host:false,code,myId:p.id});c.send({type:'hello',name:myName()});this.setStatus('');renderAll()});
-      c.on('data',d=>this.onGuest(d));
-      c.on('close',()=>{if(this.active){toast('A sala fechou ou perdeste a ligação',4000);this.leave(true);renderAll()}})});
+    const p=new Peer({debug:1});this.peer=p;this.tries=0;
+    p.on('error',e=>{if(e.type==='peer-unavailable'){const was=this.active;this.leave(true);if(was)toast('A sala fechou ou perdeste a ligação',4000);else this.setStatus('Sala '+code+' não encontrada');renderAll()}else if(!this.active)this.setStatus('Erro: '+(e.type||e.message))});
+    p.on('disconnected',()=>{if(this.peer===p)setTimeout(()=>{try{if(this.peer===p&&p.disconnected&&!p.destroyed)p.reconnect()}catch{}},1000)});
+    p.on('open',()=>{if(!this.conn)this.dial(p,code)});
+  },
+  dial(p,code){
+    const c=p.connect(this.pfx+code,{reliable:true,serialization:'binary'});this.conn=c;
+    c.on('open',()=>{if(this.conn!==c)return;this.tries=0;Object.assign(this,{active:true,host:false,code,myId:p.id});c.send({type:'hello',name:myName()});this.setStatus(this.recv?'A receber o pacote…':'');renderAll()});
+    c.on('data',d=>{if(this.conn===c)this.onGuest(d)});
+    const lost=()=>{if(this.conn!==c||this.peer!==p)return;
+      if(this.tries<6){this.tries++;this.setStatus('Ligação perdida, a voltar a ligar…');
+        setTimeout(()=>{if(this.peer!==p||this.conn!==c)return;if(p.disconnected&&!p.destroyed){try{p.reconnect()}catch{}p.once('open',()=>{if(this.conn===c)this.dial(p,code)})}else this.dial(p,code)},1500*this.tries);return}
+      const was=this.active;this.leave(true);if(was)toast('A sala fechou ou perdeste a ligação',4000);renderAll()};
+    c.on('close',lost);c.on('error',lost);
   },
   async onGuest(d){
     switch(d.type){
       case'welcome':this.myId=d.you;break;
       case'ping':this.toHost({type:'pong'});break;
       case'state':this.players=d.players;this.cast=d.cast;renderAll();break;
-      case'pack':{if(S.pack&&S.pack.id===d.id){S.takes={};this.toHost({type:'haveTakes'});renderAll();break}
+      case'pack':{if(this.recv&&this.recv.id===d.id){this.toHost({type:'needPack',have:Object.keys(this.recv.parts).map(Number)});break}
+        if(S.pack&&S.pack.id===d.id){S.takes={};this.toHost({type:'haveTakes'});renderAll();break}
         const rec=await DB.get('packs',d.id);if(rec){await openPack(rec.blob,rec.id);this.toHost({type:'haveTakes'})}else{this.recv={parts:[],got:0,id:d.id};this.setStatus('A receber “'+d.title+'”…');this.toHost({type:'needPack'})}break}
       case'chunk':{const r=this.recv;if(!r||r.parts[d.i])break;r.parts[d.i]=toAB(d.data);r.got++;this.setStatus(`A receber o pacote… ${Math.round(r.got/d.n*100)}%`);if(r.got===d.n){this.recv=null;this.setStatus('');const blob=new Blob(r.parts,{type:'application/zip'});let b=blob;try{b=await importBlob(blob,r.id)}catch(e){console.warn(e)}await openPack(b,r.id);this.toHost({type:'haveTakes'})}break}
       case'take':await this.applyTake(d.take);break;
@@ -1036,7 +1046,7 @@ const NET={
       case'allDone':bigCountdown(3);break;
     }
   },
-  leave(quiet){const was=this.active;clearTimeout(this.doneTimer);this.doneTimer=null;this.doneSig='';$('#bigCount').hidden=true;const nm=$('#nameIn');if(nm&&nm.value.trim())LS.set('dubparty-name',nm.value.trim());clearInterval(this.hb);try{this.conn&&this.conn.close()}catch{}for(const c of this.conns.values())try{c.close()}catch{}try{this.peer&&this.peer.destroy()}catch{}Object.assign(this,{active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},recv:null});if(!quiet)this.setStatus('');if(was&&S.pack)loadTakesFromDB().then(renderAll)}
+  leave(quiet){const was=this.active;clearTimeout(this.doneTimer);this.doneTimer=null;this.doneSig='';$('#bigCount').hidden=true;const nm=$('#nameIn');if(nm&&nm.value.trim())LS.set('dubparty-name',nm.value.trim());clearInterval(this.hb);try{this.conn&&this.conn.close()}catch{}for(const c of this.conns.values())try{c.close()}catch{}try{this.peer&&this.peer.destroy()}catch{}Object.assign(this,{active:false,host:false,peer:null,conns:new Map(),conn:null,code:'',myId:null,players:[],cast:{},recv:null,streaming:new Set(),tries:0});if(!quiet)this.setStatus('');if(was&&S.pack)loadTakesFromDB().then(renderAll)}
 };
 function renderMP(){
   const el=$('#mp');
