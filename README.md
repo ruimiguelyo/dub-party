@@ -12,6 +12,7 @@ A free dubbing party game you play in the browser with your friends. Works with 
 4. Your friends open the same link, type the code and get the pack automatically. They don't need to download it.
 5. Everyone picks a character and records their lines, with voice effects (robot, monster, radio…).
 6. When everyone is done, the dub plays for the whole room at the same time, with live reactions 😂🔥💀.
+7. Hit **🎬 Save video** to download your dub as an MP4 and share it.
 
 No account, no download, nothing to set up. Use headphones.
 

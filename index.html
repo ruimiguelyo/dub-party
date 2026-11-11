@@ -130,6 +130,7 @@ aside .card+.card{margin-top:14px}
 .players li i{width:8px;height:8px;border-radius:50%}
 .players li span{flex:1}
 .players li small{color:var(--muted)}
+#saveBtn.pulse{animation:savePulse 1s ease 3}@keyframes savePulse{50%{box-shadow:0 0 0 6px rgba(25,198,214,.35)}}
 .optpill{font-size:12px;font-weight:600;color:#ffd166;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:999px;padding:5px 10px;white-space:nowrap}
 .players li small.ok{color:var(--acc,#22c7d6);font-weight:600}
 .reacts{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;z-index:6}
@@ -191,6 +192,7 @@ kbd{border:1px solid #555;border-radius:4px;padding:0 5px;font-size:12px;backgro
     <span class="optpill" id="optPill" hidden title="Só acontece uma vez por pacote. Já podes jogar enquanto isto corre."></span>
     <span class="sp"></span>
     <button class="b main" id="watchBtn">▶ Ver dobragem</button>
+    <button class="b" id="saveBtn" hidden title="Guarda a dobragem como vídeo (MP4) para partilhar">🎬 Guardar vídeo</button>
     <button class="b" id="installBtn" hidden title="Instala o Dub Party como uma app">⬇ Instalar</button>
     <button class="ico" id="langBtn" title="Mudar língua" style="font-size:11px">PT</button>
     <button class="ico" id="helpBtn" title="Como jogar">?</button>
@@ -201,7 +203,8 @@ kbd{border:1px solid #555;border-radius:4px;padding:0 5px;font-size:12px;backgro
     <label>Nível <button class="lnk" id="micTest" style="float:right;padding:0 6px">testar</button></label><div class="lvl"><div id="micLvl"></div></div>
     <label>Atraso do microfone: <b id="micDelayV">0</b> ms</label><input type="range" id="micDelay" min="-200" max="300" step="5" value="0">
     <hr>
-    <button class="b" id="exportBtn">⬇ Exportar dobragem (WAV)</button>
+    <button class="b" id="saveBtn2">🎬 Guardar vídeo (MP4)</button>
+    <button class="b" id="exportBtn">⬇ Só o áudio (WAV)</button>
     <button class="b" id="clearBtn">🗑 Apagar as minhas gravações</button>
   </div>
   <div class="shelf" id="shelf" hidden></div>
@@ -308,7 +311,7 @@ const EN={
 'A criar sala…':'Creating room…','Envia o código aos teus amigos':'Send the code to your friends','Escreve o código da sala':'Type the room code',
 'A sala fechou ou perdeste a ligação':'The room closed or you lost connection','Primeiro escolhe um pacote':'Choose a pack first','Código copiado':'Code copied',
 'Fechar a sala para todos?':'Close the room for everyone?','Sair da sala?':'Leave the room?','Dub Party instalado 🎉':'Dub Party installed 🎉',
-'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language','Ligação perdida, a voltar a ligar…':'Connection lost, reconnecting…','o microfone está a ser usado por outra app (uma chamada?)':'another app is using the microphone (a call?)','O microfone foi cortado por outra app. Se estás numa chamada, desliga-a e tenta de novo.':"Another app took the microphone. If you're on a call, hang up and try again.",'Não ouvi nada. No iPhone, o microfone não funciona durante chamadas (telefone, WhatsApp, Discord…).':"Didn't hear anything. On iPhone the mic doesn't work during calls (phone, WhatsApp, Discord…).",'A receber o pacote…':'Receiving the pack…'
+'alguém':'someone','Alguém':'Someone','os outros':'the others','Mudar língua':'Change language','Guarda a dobragem como vídeo (MP4) para partilhar':'Save the dub as a video (MP4) to share','🎬 Guardar vídeo':'🎬 Save video','🎬 Guardar vídeo (MP4)':'🎬 Save video (MP4)','⬇ Só o áudio (WAV)':'⬇ Audio only (WAV)','este pacote não tem vídeo':"this pack has no video",'À espera que a otimização do vídeo acabe…':'Waiting for the video optimization to finish…','🎬 Vídeo guardado nas transferências':'🎬 Video saved to your downloads','Ligação perdida, a voltar a ligar…':'Connection lost, reconnecting…','o microfone está a ser usado por outra app (uma chamada?)':'another app is using the microphone (a call?)','O microfone foi cortado por outra app. Se estás numa chamada, desliga-a e tenta de novo.':"Another app took the microphone. If you're on a call, hang up and try again.",'Não ouvi nada. No iPhone, o microfone não funciona durante chamadas (telefone, WhatsApp, Discord…).':"Didn't hear anything. On iPhone the mic doesn't work during calls (phone, WhatsApp, Discord…).",'A receber o pacote…':'Receiving the pack…'
 };
 const tr1=s=>EN[s]!=null?EN[s]:s;
 const RULES=[
@@ -324,7 +327,7 @@ const RULES=[
 [/^A abrir o (\w+)… \(só da primeira vez demora um pouco\)$/,'Opening the $1… (slower only the first time)'],
 [/^Para abrir \.(\w+) preciso de internet \(leitor 7-Zip\)\.$/,'Opening .$1 files needs internet (7-Zip reader).'],
 [/^Não consegui extrair este \.(\w+) \(tem palavra-passe ou está danificado\?\)$/,"Couldn't extract this .$1 (password-protected or damaged?)"],
-[/^conversão falhou \((.*)\)$/,'conversion failed ($1)'],[/^⚡ A otimizar o vídeo… (\d+)%$/,'⚡ Optimizing video… $1%'],
+[/^conversão falhou \((.*)\)$/,'conversion failed ($1)'],[/^A criar o vídeo… (\d+)%$/,'Creating the video… $1%'],[/^⚡ A otimizar o vídeo… (\d+)%$/,'⚡ Optimizing video… $1%'],
 [/^(.+) saiu da sala$/,(m,a)=>tr1(a)+' left the room'],[/^(.+) entrou na sala$/,(m,a)=>tr1(a)+' joined the room'],
 [/^A entrar na sala (.+)…$/,'Joining room $1…'],[/^Sala (.+) não encontrada$/,'Room $1 not found'],
 [/^A receber “(.+)”…$/,'Receiving “$1”…'],[/^A receber o pacote… (\d+)%$/,'Receiving the pack… $1%'],
@@ -623,7 +626,7 @@ const cur=()=>S.pack&&S.pack.lines[S.idx];
 const ownerOf=c=>NET.active?NET.cast[c]:(S.myChars.has(c)?'me':null);
 function isMine(l){if(NET.active)return NET.cast[l.char]===NET.myId;return S.myChars.size?S.myChars.has(l.char):true}
 const canRecord=l=>!NET.active||NET.cast[l.char]===NET.myId;
-function renderAll(){renderLine();renderStrip();renderLines();renderShelf();renderMP();renderChars();if(NET.host)setTimeout(()=>NET.checkDone(),400)}
+function renderAll(){$('#saveBtn').hidden=!(S.pack&&Object.keys(S.takes).length);renderLine();renderStrip();renderLines();renderShelf();renderMP();renderChars();if(NET.host)setTimeout(()=>NET.checkDone(),400)}
 function renderLine(){
   const p=S.pack,l=cur();
   $('#empty').hidden=!!p;$('#packName').textContent=p?p.title:'Escolher pacote';
@@ -752,6 +755,7 @@ function stopAll(silent){
   if(MIC.node)MIC.node.port.postMessage(false);MIC.chunks=null;liveRec=null;
   vid.pause();playhead=null;$('#count').textContent='';$('#chipL').classList.remove('rec');$('#reacts').hidden=true;
   const was=S.busy;S.busy=null;$('#watchBtn').textContent='▶ Ver dobragem';$('#watchBtn').classList.remove('on');
+  if(was==='watch'&&S.pack&&Object.keys(S.takes).length){const b=$('#saveBtn');b.hidden=false;b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse')}
   if(!silent&&was&&S.pack)renderLine();
   if(NET.host&&was&&was!=='watch')setTimeout(()=>NET.checkDone(),400);
 }
@@ -825,13 +829,38 @@ async function watchSolo(){stopAll(true);loading('A preparar a dobragem…');con
 /* ===== settings popover ===== */
 $('#setBtn').onclick=e=>{e.stopPropagation();$('#pop').hidden=!$('#pop').hidden;if(!$('#pop').hidden)listMics()};
 document.addEventListener('click',e=>{if(!$('#pop').hidden&&!e.target.closest('#pop'))$('#pop').hidden=true});
+async function mixDub(){const plan=await buildPlan(),sr=44100,c=new OfflineAudioContext(2,Math.ceil((S.pack.duration+0.5)*sr),sr);
+  const add=(buf,at,end)=>{const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();s.connect(g);g.connect(c.destination);let off=0;if(at<0){off=-at;at=0}s.start(at,off);if(end!=null){g.gain.setValueAtTime(1,Math.max(at,end-0.05));g.gain.linearRampToValueAtTime(0,end);s.stop(end+0.01)}};
+  if(S.pack.backing)add(S.pack.backing,0,null);for(const it of plan)add(it.buf,it.at,it.end);
+  return c.startRendering()}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.replace(/[\\/:*?"<>|]+/g,' ');document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000)}
 $('#exportBtn').onclick=async()=>{
   if(!S.pack)return;loading('A misturar a dobragem…');
-  try{const plan=await buildPlan(),sr=44100,c=new OfflineAudioContext(2,Math.ceil((S.pack.duration+0.5)*sr),sr);
-    const add=(buf,at,end)=>{const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();s.connect(g);g.connect(c.destination);let off=0;if(at<0){off=-at;at=0}s.start(at,off);if(end!=null){g.gain.setValueAtTime(1,Math.max(at,end-0.05));g.gain.linearRampToValueAtTime(0,end);s.stop(end+0.01)}};
-    if(S.pack.backing)add(S.pack.backing,0,null);for(const it of plan)add(it.buf,it.at,it.end);
-    const a=document.createElement('a');a.href=URL.createObjectURL(encodeWav(await c.startRendering()));a.download=S.pack.title+' - dobragem.wav';a.click();
-  }catch(e){toast('Erro ao exportar: '+e.message)}loading()};
+  try{download(encodeWav(await mixDub()),S.pack.title+' - dobragem.wav')}catch(e){toast('Erro ao exportar: '+e.message)}loading()};
+// the dub as a video (MP4) to share: the pack's video + everyone's voices
+let saving=false;
+async function saveVideo(){
+  if(!S.pack||saving)return;if(S.busy)stopAll();saving=true;$('#pop').hidden=true;
+  try{
+    loading('A misturar a dobragem…');const wav=new Uint8Array(await encodeWav(await mixDub()).arrayBuffer());
+    const zip=await JSZip.loadAsync(S.blob),vName=Object.keys(zip.files).find(n=>/(^|\/)dub_video\.(mp4|webm|ogv|ogg|mov)$/i.test(n));
+    if(!vName)throw new Error('este pacote não tem vídeo');
+    const video=await zip.file(vName).async('uint8array'),isMp4=/\.mp4$/i.test(vName);
+    if(OPT.busy&&OPT.busy!=='export'){loading('À espera que a otimização do vídeo acabe…');while(OPT.busy)await sleep(500)}
+    OPT.busy='export';
+    const prog=p=>loading('A criar o vídeo… '+Math.round(clamp(p,0,1)*100)+'%');prog(0);
+    const vArgs=isMp4?['-c:v','copy']:['-vf',"scale=-2:'min(720,ih)'",'-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p'];
+    const tail=['-c:a','aac','-b:a','192k','-movflags','+faststart','-shortest','out.mp4'];
+    let out=null;
+    // no separate backing track: the scene's own sound is in the video, so mix it under the voices
+    if(!S.pack.backing)try{out=await ffRun(null,['-i','v','-i','a.wav','-filter_complex','[0:a:0][1:a:0]amix=inputs=2:duration=longest:normalize=0[a]','-map','0:v:0','-map','[a]',...vArgs,...tail],'out.mp4',prog,{v:video.slice(),'a.wav':wav.slice()})}catch(e){out=null}
+    if(!out)out=await ffRun(null,['-i','v','-i','a.wav','-map','0:v:0','-map','1:a:0',...vArgs,...tail],'out.mp4',prog,{v:video,'a.wav':wav});
+    download(new Blob([out],{type:'video/mp4'}),S.pack.title+' - Dub Party.mp4');
+    toast('🎬 Vídeo guardado nas transferências',4500);
+  }catch(e){toast('Erro ao exportar: '+e.message,5000)}
+  finally{if(OPT.busy==='export')OPT.busy=null;saving=false;loading()}
+}
+$('#saveBtn').onclick=saveVideo;$('#saveBtn2').onclick=saveVideo;
 function encodeWav(b){const ch=b.numberOfChannels,len=b.length,sr=b.sampleRate,buf=new ArrayBuffer(44+len*ch*2),v=new DataView(buf),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+len*ch*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,len*ch*2,true);const d=[];for(let c=0;c<ch;c++)d.push(b.getChannelData(c));let o=44;for(let i=0;i<len;i++)for(let c=0;c<ch;c++){v.setInt16(o,clamp(d[c][i],-1,1)*32767,true);o+=2}return new Blob([buf],{type:'audio/wav'})}
 $('#clearBtn').onclick=async()=>{if(!S.pack)return;const mine=Object.values(S.takes).filter(t=>{const l=S.pack.lines.find(l=>l.id===t.lineId);return l&&canRecord(l)&&(!NET.active||t.by===NET.myId)});if(!mine.length)return toast('Não tens gravações neste pacote');if(!confirm(`Apagar ${mine.length} gravações tuas deste pacote?`))return;for(const t of mine){await removeTake(t.lineId);NET.sendTakeDel(t.lineId)}renderAll()};
 
@@ -879,16 +908,17 @@ const OPT={busy:null,worker:null};
 function ffWorker(){
   if(OPT.worker)return OPT.worker;
   const src=`import f from '${FF_CORE}';let core;
-self.onmessage=async e=>{const {input,args,out}=e.data;
+self.onmessage=async e=>{const {input,args,out,files}=e.data;
   try{if(!core){core=await f({});core.setProgress(p=>self.postMessage({prog:p.progress}))}
-  core.FS.writeFile('in',input);const rc=core.exec(...args);let data=null;try{data=core.FS.readFile(out);core.FS.unlink(out)}catch(err){}
-  try{core.FS.unlink('in')}catch(err){}core.reset();self.postMessage({done:true,rc,data},data?[data.buffer]:[])}
+  const names=files?Object.keys(files):['in'];if(files)for(const k of names)core.FS.writeFile(k,files[k]);else core.FS.writeFile('in',input);
+  const rc=core.exec(...args);let data=null;try{data=core.FS.readFile(out);core.FS.unlink(out)}catch(err){}
+  for(const k of names)try{core.FS.unlink(k)}catch(err){}core.reset();self.postMessage({done:true,rc,data},data?[data.buffer]:[])}
   catch(err){self.postMessage({done:true,rc:-1,err:String(err)})}}`;
   OPT.worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})),{type:'module'});return OPT.worker;
 }
-function ffRun(input,args,out,onProg){return new Promise((res,rej)=>{const w=ffWorker();
+function ffRun(input,args,out,onProg,files){return new Promise((res,rej)=>{const w=ffWorker();
   w.onmessage=e=>{const d=e.data;if(d.prog!=null){onProg&&onProg(d.prog);return}if(d.done){if(d.data&&d.data.length>1000)res(d.data);else rej(new Error(d.err||'conversão falhou ('+d.rc+')'))}};
-  w.onerror=e=>rej(new Error(e.message||'worker'));w.postMessage({input,args,out},[input.buffer])})}
+  w.onerror=e=>rej(new Error(e.message||'worker'));w.postMessage({input,args,out,files},files?Object.values(files).map(f=>f.buffer):[input.buffer])})}
 function optPill(txt){const el=$('#optPill');el.hidden=!txt;if(txt)el.textContent=txt}
 async function optimizeVideo(id){
   if(OPT.busy||!window.Worker)return;OPT.busy=id;
